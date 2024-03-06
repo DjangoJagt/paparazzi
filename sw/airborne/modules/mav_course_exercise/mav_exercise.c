@@ -37,6 +37,7 @@ uint8_t moveWaypoint(uint8_t waypoint, struct EnuCoor_i *new_coor);
 enum navigation_state_t {
   SAFE,
   OBSTACLE_FOUND,
+  SEARCH_FOR_SAFE_HEADING,
   OUT_OF_BOUNDS,
   HOLD
 };
@@ -46,10 +47,11 @@ float oa_color_count_frac = 0.18f;
 enum navigation_state_t navigation_state = SAFE;
 int32_t color_count = 0;               // orange color count from color filter for obstacle detection
 int16_t obstacle_free_confidence = 0;   // a measure of how certain we are that the way ahead is safe.
-float moveDistance = 2;                 // waypoint displacement [m]
+float moveDistance = 2;                // waypoint displacement [m]
+float heading_increment = 20.f;            // heading angle increment [deg]
 float oob_haeding_increment = 5.f;      // heading angle increment if out of bounds [deg]
 const int16_t max_trajectory_confidence = 5; // number of consecutive negative object detections to be sure we are obstacle free
-
+float div_size = 0;
 
 // needed to receive output from a separate module running on a parallel process
 #ifndef ORANGE_AVOIDER_VISUAL_DETECTION_ID
@@ -64,9 +66,27 @@ static void color_detection_cb(uint8_t __attribute__((unused)) sender_id,
   color_count = quality;
 }
 
+// needed to receive output from a separate module running on a parallel process
+#ifndef GROUP_11_OPTICAL_FLOW_ID
+#define GROUP_11_OPTICAL_FLOW_ID ABI_BROADCAST
+#endif
+static abi_event optical_flow_ev;
+static void optical_flow_cb(uint8_t __attribute__((unused)) sender_id,
+                            uint32_t __attribute__((unused)) stamp,
+                            int32_t  __attribute__((unused)) flow_x,
+                            int32_t  __attribute__((unused)) flow_y,
+                            int32_t  __attribute__((unused)) flow_der_x,
+                            int32_t  __attribute__((unused)) flow_der_y,
+                            float __attribute__((unused)) quality, 
+                            float size_divergence){
+  div_size = size_divergence;
+}
+
 void mav_exercise_init(void) {
+  
   // bind our colorfilter callbacks to receive the color filter outputs
-  AbiBindMsgVISUAL_DETECTION(ORANGE_AVOIDER_VISUAL_DETECTION_ID, &color_detection_ev, color_detection_cb);
+  // AbiBindMsgVISUAL_DETECTION(ORANGE_AVOIDER_VISUAL_DETECTION_ID, &color_detection_ev, color_detection_cb);
+  AbiBindMsgOPTICAL_FLOW(GROUP_11_OPTICAL_FLOW_ID, &optical_flow_ev, optical_flow_cb);
 }
 
 void mav_exercise_periodic(void) {
@@ -75,14 +95,22 @@ void mav_exercise_periodic(void) {
     return;
   }
 
-  // compute current color thresholds
-  // front_camera defined in airframe xml, with the video_capture module
-  int32_t color_count_threshold = oa_color_count_frac * front_camera.output_size.w * front_camera.output_size.h;
+  // // compute current color thresholds
+  // // front_camera defined in airframe xml, with the video_capture module
+  // int32_t color_count_threshold = oa_color_count_frac * front_camera.output_size.w * front_camera.output_size.h;
 
-  PRINT("Color_count: %d  threshold: %d state: %d \n", color_count, color_count_threshold, navigation_state);
+  // PRINT("Color_count: %d  threshold: %d state: %d \n", color_count, color_count_threshold, navigation_state);
 
-  // update our safe confidence using color threshold
-  if (color_count < color_count_threshold) {
+  // // update our safe confidence using color threshold
+  // if (color_count < color_count_threshold) {
+  //   obstacle_free_confidence++;
+  // } else {
+  //   obstacle_free_confidence -= 2;  // be more cautious with positive obstacle detections
+  // }
+
+  float div_size_threshold = 0.001;
+  // update our safe confidence using size threshold
+  if (div_size < div_size_threshold) {
     obstacle_free_confidence++;
   } else {
     obstacle_free_confidence -= 2;  // be more cautious with positive obstacle detections
@@ -108,7 +136,18 @@ void mav_exercise_periodic(void) {
       waypoint_move_here_2d(WP_GOAL);
       waypoint_move_here_2d(WP_TRAJECTORY);
 
+      // // randomly select new search direction
+      // choose20IncrementAvoidance();
+
       navigation_state = HOLD;
+      break;
+    case SEARCH_FOR_SAFE_HEADING:
+      increase_nav_heading(heading_increment);
+
+      // make sure we have a couple of good readings before declaring the way safe
+      if (obstacle_free_confidence >= 2){
+        navigation_state = SAFE;
+      }
       break;
     case OUT_OF_BOUNDS:
       // stop
