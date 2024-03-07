@@ -42,16 +42,17 @@ enum navigation_state_t {
   HOLD
 };
 
-// define and initialise global variables
+ // define and initialise global variables
 float oa_color_count_frac = 0.18f;
 enum navigation_state_t navigation_state = SAFE;
 int32_t color_count = 0;               // orange color count from color filter for obstacle detection
 int16_t obstacle_free_confidence = 0;   // a measure of how certain we are that the way ahead is safe.
 float moveDistance = 2;                // waypoint displacement [m]
-float heading_increment = 20.f;            // heading angle increment [deg]
+float heading_increment = 10.f;            // heading angle increment [deg]
 float oob_haeding_increment = 5.f;      // heading angle increment if out of bounds [deg]
 const int16_t max_trajectory_confidence = 5; // number of consecutive negative object detections to be sure we are obstacle free
 float div_size = 0;
+float div_size_threshold = 0.001;
 
 // needed to receive output from a separate module running on a parallel process
 #ifndef ORANGE_AVOIDER_VISUAL_DETECTION_ID
@@ -95,20 +96,19 @@ void mav_exercise_periodic(void) {
     return;
   }
 
-  // // compute current color thresholds
-  // // front_camera defined in airframe xml, with the video_capture module
-  // int32_t color_count_threshold = oa_color_count_frac * front_camera.output_size.w * front_camera.output_size.h;
+  // compute current color thresholds
+  // front_camera defined in airframe xml, with the video_capture module
+  int32_t color_count_threshold = oa_color_count_frac * front_camera.output_size.w * front_camera.output_size.h;
 
   // PRINT("Color_count: %d  threshold: %d state: %d \n", color_count, color_count_threshold, navigation_state);
 
-  // // update our safe confidence using color threshold
-  // if (color_count < color_count_threshold) {
-  //   obstacle_free_confidence++;
-  // } else {
-  //   obstacle_free_confidence -= 2;  // be more cautious with positive obstacle detections
-  // }
+  // update our safe confidence using color threshold
+  if (color_count < color_count_threshold) {
+    obstacle_free_confidence++;
+  } else {
+    obstacle_free_confidence -= 2;  // be more cautious with positive obstacle detections
+  }
 
-  float div_size_threshold = 0.001;
   // update our safe confidence using size threshold
   if (div_size < div_size_threshold) {
     obstacle_free_confidence++;
