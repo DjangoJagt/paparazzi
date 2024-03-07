@@ -110,11 +110,12 @@ void mav_exercise_periodic(void) {
   }
 
   // update our safe confidence using size threshold
-  if (div_size < div_size_threshold) {
-    obstacle_free_confidence++;
-  } else {
-    obstacle_free_confidence -= 2;  // be more cautious with positive obstacle detections
-  }
+  // if (div_size < div_size_threshold) {
+  //   obstacle_free_confidence++;
+  // } else {
+  //   obstacle_free_confidence -= 2;  // be more cautious with positive obstacle detections
+  // }
+  PRINT("div_size: %d  threshold: %d state: %d \n", div_size, div_size_threshold, navigation_state);
 
   // bound obstacle_free_confidence
   Bound(obstacle_free_confidence, 0, max_trajectory_confidence);
