@@ -115,7 +115,7 @@ void mav_exercise_periodic(void) {
   // } else {
   //   obstacle_free_confidence -= 2;  // be more cautious with positive obstacle detections
   // }
-  PRINT("div_size: %d  threshold: %d state: %d \n", div_size, div_size_threshold, navigation_state);
+  // PRINT("div_size: %d  threshold: %d state: %d \n", div_size, div_size_threshold, navigation_state);
 
   // bound obstacle_free_confidence
   Bound(obstacle_free_confidence, 0, max_trajectory_confidence);
