@@ -37,6 +37,7 @@ uint8_t moveWaypoint(uint8_t waypoint, struct EnuCoor_i *new_coor);
 enum navigation_state_t {
   SAFE,
   OBSTACLE_FOUND,
+  SEARCH_FOR_SAFE_HEADING,
   OUT_OF_BOUNDS,
   HOLD
 };
@@ -108,8 +109,20 @@ void mav_exercise_periodic(void) {
       waypoint_move_here_2d(WP_GOAL);
       waypoint_move_here_2d(WP_TRAJECTORY);
 
-      navigation_state = HOLD;
+      moveWaypointForward(WP_GOAL,0);
+
+      navigation_state = SEARCH_FOR_SAFE_HEADING;
       break;
+    case SEARCH_FOR_SAFE_HEADING:
+      increase_nav_heading(20.f);
+
+      // make sure we have a couple of good readings before declaring the way safe
+      if (obstacle_free_confidence >= 2){
+        increase_nav_heading(20.f);
+        navigation_state = SAFE;
+      }
+      break;
+    
     case OUT_OF_BOUNDS:
       // stop
       waypoint_move_here_2d(WP_GOAL);
