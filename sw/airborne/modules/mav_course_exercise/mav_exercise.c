@@ -51,6 +51,9 @@ float moveDistance = 2;                 // waypoint displacement [m]
 float oob_haeding_increment = 5.f;      // heading angle increment if out of bounds [deg]
 const int16_t max_trajectory_confidence = 5; // number of consecutive negative object detections to be sure we are obstacle free
 
+float left_divergence = 0;
+float right_divergence = 0;
+float total_divergence = 0;
 
 // needed to receive output from a separate module running on a parallel process
 #ifndef ORANGE_AVOIDER_VISUAL_DETECTION_ID
@@ -65,9 +68,22 @@ static void color_detection_cb(uint8_t __attribute__((unused)) sender_id,
   color_count = quality;
 }
 
+#ifndef OPTICALFLOW_LEFT_RIGHT_ID
+#define OPTICALFLOW_LEFT_RIGHT_ID ABI_BROADCAST
+#endif
+static abi_event left_right_div_ev;
+static void left_right_div_cb(float left_value,
+                              float right_value,
+                              float total_div) {
+  left_divergence = left_value;
+  right_divergence = right_value;
+  total_divergence = total_div;
+}
+
 void mav_exercise_init(void) {
   // bind our colorfilter callbacks to receive the color filter outputs
   AbiBindMsgVISUAL_DETECTION(ORANGE_AVOIDER_VISUAL_DETECTION_ID, &color_detection_ev, color_detection_cb);
+  AbiBindMsgOPTICAL_FLOW(OPTICALFLOW_LEFT_RIGHT_ID, &left_right_div_ev, left_right_div_cb);
 }
 
 void mav_exercise_periodic(void) {
@@ -81,6 +97,8 @@ void mav_exercise_periodic(void) {
   int32_t color_count_threshold = oa_color_count_frac * front_camera.output_size.w * front_camera.output_size.h;
 
   PRINT("Color_count: %d  threshold: %d state: %d \n", color_count, color_count_threshold, navigation_state);
+
+  PRINT("LEFT DIVERGENCE: %f  RIGHT_DIVERGENCE: %f TOTAL_DIVERGENCE: %f \n", left_divergence, right_divergence, total_divergence);
 
   // update our safe confidence using color threshold
   if (color_count < color_count_threshold) {
