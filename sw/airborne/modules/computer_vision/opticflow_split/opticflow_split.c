@@ -141,23 +141,25 @@ void opticflow_module_run(void)
     if (opticflow_got_result[idx_camera]) {
       uint32_t now_ts = get_sys_time_usec();
       AbiSendMsgOPTICAL_FLOW(FLOW_OPTICFLOW_ID + idx_camera, now_ts,
-                             opticflow_result[idx_camera].flow_x,
-                             opticflow_result[idx_camera].flow_y,
-                             opticflow_result[idx_camera].flow_der_x,
-                             opticflow_result[idx_camera].flow_der_y,
-                             opticflow_result[idx_camera].noise_measurement,
+                            //  opticflow_result[idx_camera].flow_x,
+                            //  opticflow_result[idx_camera].flow_y,
+                            //  opticflow_result[idx_camera].flow_der_x,
+                            //  opticflow_result[idx_camera].flow_der_y,
+                            //  opticflow_result[idx_camera].noise_measurement,
+                             left_div_size,
+                             right_div_size,
                              opticflow_result[idx_camera].div_size);
-      //TODO Find an appropriate quality measure for the noise model in the state filter, for now it is tracked_cnt
-      if (opticflow_result[idx_camera].noise_measurement < 0.8) {
-        AbiSendMsgVELOCITY_ESTIMATE(VEL_OPTICFLOW_ID + idx_camera, now_ts,
-                                    opticflow_result[idx_camera].vel_body.x,
-                                    opticflow_result[idx_camera].vel_body.y,
-                                    0.0f, //opticflow_result.vel_body.z,
-                                    opticflow_result[idx_camera].noise_measurement,
-                                    opticflow_result[idx_camera].noise_measurement,
-                                    -1.0f //opticflow_result.noise_measurement // negative value disables filter updates with OF-based vertical velocity.
-                                   );
-      }
+      // //TODO Find an appropriate quality measure for the noise model in the state filter, for now it is tracked_cnt
+      // if (opticflow_result[idx_camera].noise_measurement < 0.8) {
+      //   AbiSendMsgVELOCITY_ESTIMATE(VEL_OPTICFLOW_ID + idx_camera, now_ts,
+      //                               opticflow_result[idx_camera].vel_body.x,
+      //                               opticflow_result[idx_camera].vel_body.y,
+      //                               0.0f, //opticflow_result.vel_body.z,
+      //                               opticflow_result[idx_camera].noise_measurement,
+      //                               opticflow_result[idx_camera].noise_measurement,
+      //                               -1.0f //opticflow_result.noise_measurement // negative value disables filter updates with OF-based vertical velocity.
+      //                              );
+      // }
       opticflow_got_result[idx_camera] = false;
     }
   }
@@ -210,16 +212,16 @@ struct image_t *opticflow_module_calc(struct image_t *img, uint8_t camera_id)
     pthread_mutex_unlock(&opticflow_mutex);
   }
 
-  // // Do the optical flow calculation
-  // static struct opticflow_result_t
-  //   temp_result[ACTIVE_CAMERAS]; // static so that the number of corners is kept between frames
-  // if (opticflow_calc_frame(&opticflow[camera_id], img, &temp_result[camera_id])) {
-  //   // Copy the result if finished
-  //   pthread_mutex_lock(&opticflow_mutex);
-  //   opticflow_result[camera_id] = temp_result[camera_id];
-  //   opticflow_got_result[camera_id] = true;
-  //   pthread_mutex_unlock(&opticflow_mutex);
-  // }
+  // Do the optical flow calculation
+  static struct opticflow_result_t
+    temp_result[ACTIVE_CAMERAS]; // static so that the number of corners is kept between frames
+  if (opticflow_calc_frame(&opticflow[camera_id], img, &temp_result[camera_id])) {
+    // Copy the result if finished
+    pthread_mutex_lock(&opticflow_mutex);
+    opticflow_result[camera_id] = temp_result[camera_id];
+    opticflow_got_result[camera_id] = true;
+    pthread_mutex_unlock(&opticflow_mutex);
+  }
 
   return img;
 }
