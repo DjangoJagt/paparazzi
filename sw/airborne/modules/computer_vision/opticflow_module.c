@@ -25,7 +25,7 @@
  */
 
 
-#include "opticflow_module.h"
+#include "opticflow_split.h"
 
 #include <stdio.h>
 #include <pthread.h>
@@ -64,6 +64,9 @@ PRINT_CONFIG_VAR(OPTICFLOW_FPS_CAMERA2)
 #else
 #define ACTIVE_CAMERAS 1
 #endif
+
+float left_div_size;
+float right_div_size;
 
 /* The main opticflow variables */
 struct opticflow_t opticflow[ACTIVE_CAMERAS];                         ///< Opticflow calculations
@@ -137,24 +140,27 @@ void opticflow_module_run(void)
   for (int idx_camera = 0; idx_camera < ACTIVE_CAMERAS; idx_camera++) {
     if (opticflow_got_result[idx_camera]) {
       uint32_t now_ts = get_sys_time_usec();
-      AbiSendMsgOPTICAL_FLOW(FLOW_OPTICFLOW_ID + idx_camera, now_ts,
-                             opticflow_result[idx_camera].flow_x,
-                             opticflow_result[idx_camera].flow_y,
-                             opticflow_result[idx_camera].flow_der_x,
-                             opticflow_result[idx_camera].flow_der_y,
-                             opticflow_result[idx_camera].noise_measurement,
+      AbiSendMsgOPTICAL_FLOW(FLOW_OPTICFLOW_ID + idx_camera, 
+                            // now_ts,
+                            //  opticflow_result[idx_camera].flow_x,
+                            //  opticflow_result[idx_camera].flow_y,
+                            //  opticflow_result[idx_camera].flow_der_x,
+                            //  opticflow_result[idx_camera].flow_der_y,
+                            //  opticflow_result[idx_camera].noise_measurement,
+                             left_div_size,
+                             right_div_size,
                              opticflow_result[idx_camera].div_size);
-      //TODO Find an appropriate quality measure for the noise model in the state filter, for now it is tracked_cnt
-      if (opticflow_result[idx_camera].noise_measurement < 0.8) {
-        AbiSendMsgVELOCITY_ESTIMATE(VEL_OPTICFLOW_ID + idx_camera, now_ts,
-                                    opticflow_result[idx_camera].vel_body.x,
-                                    opticflow_result[idx_camera].vel_body.y,
-                                    0.0f, //opticflow_result.vel_body.z,
-                                    opticflow_result[idx_camera].noise_measurement,
-                                    opticflow_result[idx_camera].noise_measurement,
-                                    -1.0f //opticflow_result.noise_measurement // negative value disables filter updates with OF-based vertical velocity.
-                                   );
-      }
+      // //TODO Find an appropriate quality measure for the noise model in the state filter, for now it is tracked_cnt
+      // if (opticflow_result[idx_camera].noise_measurement < 0.8) {
+      //   AbiSendMsgVELOCITY_ESTIMATE(VEL_OPTICFLOW_ID + idx_camera, now_ts,
+      //                               opticflow_result[idx_camera].vel_body.x,
+      //                               opticflow_result[idx_camera].vel_body.y,
+      //                               0.0f, //opticflow_result.vel_body.z,
+      //                               opticflow_result[idx_camera].noise_measurement,
+      //                               opticflow_result[idx_camera].noise_measurement,
+      //                               -1.0f //opticflow_result.noise_measurement // negative value disables filter updates with OF-based vertical velocity.
+      //                              );
+      // }
       opticflow_got_result[idx_camera] = false;
     }
   }
@@ -177,6 +183,36 @@ struct image_t *opticflow_module_calc(struct image_t *img, uint8_t camera_id)
   struct pose_t pose = get_rotation_at_timestamp(img->pprz_ts);
   img->eulers = pose.eulers;
 
+  // Split the image into two halves
+  struct image_t left_img, right_img;
+  memcpy(&left_img, img, sizeof(struct image_t));
+  memcpy(&right_img, img, sizeof(struct image_t));
+
+  // Adjust the width for both images
+  left_img.w = img->w / 2;
+  right_img.w = img->w / 2;
+
+  // Adjust the buffer pointer for the right image
+  right_img.buf += left_img.w * img->h * (img->bpp / 8);
+
+  // Do the optical flow calculation for the left half
+  static struct opticflow_result_t left_result;
+  if (opticflow_calc_frame(&opticflow[camera_id], &left_img, &left_result)) {
+    pthread_mutex_lock(&opticflow_mutex);
+    // Process the result for the left half
+    left_div_size = left_result.div_size;
+    pthread_mutex_unlock(&opticflow_mutex);
+  }
+
+  // Do the optical flow calculation for the right half
+  static struct opticflow_result_t right_result;
+  if (opticflow_calc_frame(&opticflow[camera_id], &right_img, &right_result)) {
+    pthread_mutex_lock(&opticflow_mutex);
+    // Process the result for the right half
+    right_div_size = right_result.div_size;
+    pthread_mutex_unlock(&opticflow_mutex);
+  }
+
   // Do the optical flow calculation
   static struct opticflow_result_t
     temp_result[ACTIVE_CAMERAS]; // static so that the number of corners is kept between frames
@@ -187,5 +223,6 @@ struct image_t *opticflow_module_calc(struct image_t *img, uint8_t camera_id)
     opticflow_got_result[camera_id] = true;
     pthread_mutex_unlock(&opticflow_mutex);
   }
+
   return img;
 }
