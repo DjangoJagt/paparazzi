@@ -15,6 +15,7 @@
 
 // settings
 extern float oa_color_count_frac;
+extern float div_size_threshold;
 
 // functions
 extern void group11_opticflow_init(void);
