@@ -25,7 +25,7 @@
  */
 
 
-#include "opticflow_split.h"
+#include "opticflow_module.h"
 
 #include <stdio.h>
 #include <pthread.h>
