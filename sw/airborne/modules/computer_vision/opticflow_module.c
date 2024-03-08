@@ -193,7 +193,7 @@ struct image_t *opticflow_module_calc(struct image_t *img, uint8_t camera_id)
   right_img.w = img->w / 2;
 
   // Adjust the buffer pointer for the right image
-  right_img.buf += left_img.w * img->h * (img->bpp / 8);
+  right_img.buf += left_img.w * img->h * 2;
 
   // Do the optical flow calculation for the left half
   static struct opticflow_result_t left_result;
