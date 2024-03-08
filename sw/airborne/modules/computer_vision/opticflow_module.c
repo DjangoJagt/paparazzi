@@ -147,9 +147,9 @@ void opticflow_module_run(void)
                             //  opticflow_result[idx_camera].flow_der_x,
                             //  opticflow_result[idx_camera].flow_der_y,
                             //  opticflow_result[idx_camera].noise_measurement,
-                             left_div_size,
-                             right_div_size,
-                             opticflow_result[idx_camera].div_size);
+                             3.0,
+                             3.0,
+                             3.0);
       // //TODO Find an appropriate quality measure for the noise model in the state filter, for now it is tracked_cnt
       // if (opticflow_result[idx_camera].noise_measurement < 0.8) {
       //   AbiSendMsgVELOCITY_ESTIMATE(VEL_OPTICFLOW_ID + idx_camera, now_ts,
@@ -193,7 +193,7 @@ struct image_t *opticflow_module_calc(struct image_t *img, uint8_t camera_id)
   right_img.w = img->w / 2;
 
   // Adjust the buffer pointer for the right image
-  right_img.buf += left_img.w * img->h * 2;
+  right_img.buf = (uint8_t*)img->buf + img->w * img->h / 2;
 
   // Do the optical flow calculation for the left half
   static struct opticflow_result_t left_result;

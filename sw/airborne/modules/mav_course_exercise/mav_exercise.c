@@ -72,7 +72,7 @@ static void color_detection_cb(uint8_t __attribute__((unused)) sender_id,
 #define OPTICALFLOW_LEFT_RIGHT_ID ABI_BROADCAST
 #endif
 static abi_event left_right_div_ev;
-static void left_right_div_cb(float left_value,
+static void left_right_div_cb(uint8_t __attribute__((unused)) sender_id, float left_value,
                               float right_value,
                               float total_div) {
   left_divergence = left_value;
