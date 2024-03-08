@@ -65,6 +65,8 @@ PRINT_CONFIG_VAR(OPTICFLOW_FPS_CAMERA2)
 #define ACTIVE_CAMERAS 1
 #endif
 
+#define PRINT(string, ...) fprintf(stderr, "[mav_exercise->%s()] " string,__FUNCTION__ , ##__VA_ARGS__)
+
 float left_div_size;
 float right_div_size;
 
@@ -112,20 +114,16 @@ static void opticflow_telem_send(struct transport_tx *trans, struct link_device 
  */
 void opticflow_module_init(void)
 {
-  // Initialize the opticflow calculation
-  for (int idx_camera = 0; idx_camera < ACTIVE_CAMERAS; idx_camera++) {
-    opticflow_got_result[idx_camera] = false;
-  }
+
+  opticflow_got_result[0] = false;
+
   opticflow_calc_init(opticflow);
 
   cv_add_to_device(&OPTICFLOW_CAMERA, opticflow_module_calc, OPTICFLOW_FPS, 0);
-#ifdef OPTICFLOW_CAMERA2
-  cv_add_to_device(&OPTICFLOW_CAMERA2, opticflow_module_calc, OPTICFLOW_FPS_CAMERA2, 1);
-#endif
 
-#if PERIODIC_TELEMETRY
-  register_periodic_telemetry(DefaultPeriodic, PPRZ_MSG_ID_OPTIC_FLOW_EST, opticflow_telem_send);
-#endif
+// #if PERIODIC_TELEMETRY
+//   register_periodic_telemetry(DefaultPeriodic, PPRZ_MSG_ID_OPTIC_FLOW_EST, opticflow_telem_send);
+// #endif
 
 }
 
@@ -135,36 +133,45 @@ void opticflow_module_init(void)
  */
 void opticflow_module_run(void)
 {
-  pthread_mutex_lock(&opticflow_mutex);
-  // Update the stabilization loops on the current calculation
-  for (int idx_camera = 0; idx_camera < ACTIVE_CAMERAS; idx_camera++) {
-    if (opticflow_got_result[idx_camera]) {
-      uint32_t now_ts = get_sys_time_usec();
-      AbiSendMsgOPTICAL_FLOW(FLOW_OPTICFLOW_ID + idx_camera, 
+  // AbiSendMsgOPTICAL_FLOW(FLOW_OPTICFLOW_ID, 
+  //                           // now_ts,
+  //                           //  opticflow_result[idx_camera].flow_x,
+  //                           //  opticflow_result[idx_camera].flow_y,
+  //                           //  opticflow_result[idx_camera].flow_der_x,
+  //                           //  opticflow_result[idx_camera].flow_der_y,
+  //                           //  opticflow_result[idx_camera].noise_measurement,
+  //                            3.0,
+  //                            3.0,
+  //                            3.0);
+  // pthread_mutex_lock(&opticflow_mutex);
+  if (opticflow_got_result[0]) {
+      AbiSendMsgOPTICAL_FLOW(FLOW_OPTICFLOW_ID, 
                             // now_ts,
                             //  opticflow_result[idx_camera].flow_x,
                             //  opticflow_result[idx_camera].flow_y,
                             //  opticflow_result[idx_camera].flow_der_x,
                             //  opticflow_result[idx_camera].flow_der_y,
                             //  opticflow_result[idx_camera].noise_measurement,
-                             3.0,
-                             3.0,
-                             3.0);
-      // //TODO Find an appropriate quality measure for the noise model in the state filter, for now it is tracked_cnt
-      // if (opticflow_result[idx_camera].noise_measurement < 0.8) {
-      //   AbiSendMsgVELOCITY_ESTIMATE(VEL_OPTICFLOW_ID + idx_camera, now_ts,
-      //                               opticflow_result[idx_camera].vel_body.x,
-      //                               opticflow_result[idx_camera].vel_body.y,
-      //                               0.0f, //opticflow_result.vel_body.z,
-      //                               opticflow_result[idx_camera].noise_measurement,
-      //                               opticflow_result[idx_camera].noise_measurement,
-      //                               -1.0f //opticflow_result.noise_measurement // negative value disables filter updates with OF-based vertical velocity.
-      //                              );
-      // }
-      opticflow_got_result[idx_camera] = false;
-    }
+                             left_div_size,
+                             right_div_size,
+                             opticflow_result[0].div_size);
+  // // Update the stabilization loops on the current calculation
+  // for (int idx_camera = 0; idx_camera < ACTIVE_CAMERAS; idx_camera++) {
+    
+  //     // //TODO Find an appropriate quality measure for the noise model in the state filter, for now it is tracked_cnt
+  //     // if (opticflow_result[idx_camera].noise_measurement < 0.8) {
+  //     //   AbiSendMsgVELOCITY_ESTIMATE(VEL_OPTICFLOW_ID + idx_camera, now_ts,
+  //     //                               opticflow_result[idx_camera].vel_body.x,
+  //     //                               opticflow_result[idx_camera].vel_body.y,
+  //     //                               0.0f, //opticflow_result.vel_body.z,
+  //     //                               opticflow_result[idx_camera].noise_measurement,
+  //     //                               opticflow_result[idx_camera].noise_measurement,
+  //     //                               -1.0f //opticflow_result.noise_measurement // negative value disables filter updates with OF-based vertical velocity.
+  //     //                              );
+  //     // }
+      opticflow_got_result[0] = false;
   }
-  pthread_mutex_unlock(&opticflow_mutex);
+  // pthread_mutex_unlock(&opticflow_mutex);
 }
 
 /**
@@ -177,6 +184,17 @@ void opticflow_module_run(void)
  */
 struct image_t *opticflow_module_calc(struct image_t *img, uint8_t camera_id)
 {
+
+  // Do the optical flow calculation
+  static struct opticflow_result_t
+    temp_result[ACTIVE_CAMERAS]; // static so that the number of corners is kept between frames
+  if (opticflow_calc_frame(&opticflow[camera_id], img, &temp_result[camera_id])) {
+    // Copy the result if finished
+    pthread_mutex_lock(&opticflow_mutex);
+    opticflow_result[camera_id] = temp_result[camera_id];
+    opticflow_got_result[camera_id] = true;
+    pthread_mutex_unlock(&opticflow_mutex);
+  }
   // Copy the state
   // TODO : put accelerometer values at pose of img timestamp
   //struct opticflow_state_t temp_state;
@@ -213,16 +231,10 @@ struct image_t *opticflow_module_calc(struct image_t *img, uint8_t camera_id)
     pthread_mutex_unlock(&opticflow_mutex);
   }
 
-  // Do the optical flow calculation
-  static struct opticflow_result_t
-    temp_result[ACTIVE_CAMERAS]; // static so that the number of corners is kept between frames
-  if (opticflow_calc_frame(&opticflow[camera_id], img, &temp_result[camera_id])) {
-    // Copy the result if finished
-    pthread_mutex_lock(&opticflow_mutex);
-    opticflow_result[camera_id] = temp_result[camera_id];
-    opticflow_got_result[camera_id] = true;
-    pthread_mutex_unlock(&opticflow_mutex);
-  }
+  
+
+  opticflow_got_result[0] = true;
+
 
   return img;
 }
