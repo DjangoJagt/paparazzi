@@ -204,9 +204,8 @@ struct image_t *opticflow_module_calc(struct image_t *img, uint8_t camera_id)
     // Process the result for the right half
     right_div_size = right_result.div_size;
     pthread_mutex_unlock(&opticflow_mutex);
+    PRINT("RIGHT SUCCESSFUL");
   }
-
-  PRINT("RIGHT SUCCESSFUL")
 
   // Do the optical flow calculation for the left half
   static struct opticflow_result_t left_result;
@@ -215,9 +214,8 @@ struct image_t *opticflow_module_calc(struct image_t *img, uint8_t camera_id)
     // Process the result for the left half
     left_div_size = left_result.div_size;
     pthread_mutex_unlock(&opticflow_mutex);
+    PRINT("LEFT SUCCESSFUL");
   }
-
-  PRINT("LEFT SUCCESSFUL")
 
   // Copy the state
   // TODO : put accelerometer values at pose of img timestamp
@@ -234,9 +232,8 @@ struct image_t *opticflow_module_calc(struct image_t *img, uint8_t camera_id)
     opticflow_result[camera_id] = temp_result[camera_id];
     opticflow_got_result[camera_id] = true;
     pthread_mutex_unlock(&opticflow_mutex);
+    PRINT("TOTAL SUCCESSFUL");
   }
-
-  PRINT("TOTAL SUCCESSFUL")
 
   opticflow_got_result[0] = true;
 

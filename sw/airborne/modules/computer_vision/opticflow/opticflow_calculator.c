@@ -1206,7 +1206,8 @@ bool opticflow_calc_frame(struct opticflow_t *opticflow, struct image_t *img,
   * ALWAYS double check!
   */
   float_rmat_transp_vmult(&result->vel_body, &body_to_cam[opticflow->id], &result->vel_cam);
-
+  flow_successful = true;
+  
   return flow_successful;
 }
 
