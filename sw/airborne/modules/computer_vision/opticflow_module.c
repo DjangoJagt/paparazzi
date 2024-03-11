@@ -190,7 +190,7 @@ struct image_t *opticflow_module_calc(struct image_t *img, uint8_t camera_id)
   memcpy(&left_img, img, sizeof(struct image_t));
   memcpy(&right_img, img, sizeof(struct image_t));
 
-  struct image_t reset_prev = opticflow[camera_id]->prev_img_gray;
+  struct image_t reset_prev = opticflow[camera_id].prev_img_gray;
 
   // // Create unique instances of opticflow for each half and the whole image
   // struct opticflow_t right_opticflow, left_opticflow, total_opticflow;
@@ -213,7 +213,7 @@ struct image_t *opticflow_module_calc(struct image_t *img, uint8_t camera_id)
 
   // Do the optical flow calculation for the right half
   static struct opticflow_result_t right_result;
-  if (opticflow_calc_frame(&right_opticflow, &right_img, &right_result)) {
+  if (opticflow_calc_frame(&opticflow[camera_id], &right_img, &right_result)) {
     pthread_mutex_lock(&opticflow_mutex);
     // Process the result for the right half
     right_div_size = right_result.div_size;
@@ -225,7 +225,7 @@ struct image_t *opticflow_module_calc(struct image_t *img, uint8_t camera_id)
 
   // Do the optical flow calculation for the left half
   static struct opticflow_result_t left_result;
-  if (opticflow_calc_frame(&left_opticflow, &left_img, &left_result)) {
+  if (opticflow_calc_frame(&opticflow[camera_id], &left_img, &left_result)) {
     pthread_mutex_lock(&opticflow_mutex);
     // Process the result for the left half
     left_div_size = left_result.div_size;
