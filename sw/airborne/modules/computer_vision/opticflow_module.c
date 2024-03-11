@@ -185,22 +185,6 @@ void opticflow_module_run(void)
 struct image_t *opticflow_module_calc(struct image_t *img, uint8_t camera_id)
 {
 
-  // Do the optical flow calculation
-  static struct opticflow_result_t
-    temp_result[ACTIVE_CAMERAS]; // static so that the number of corners is kept between frames
-  if (opticflow_calc_frame(&opticflow[camera_id], img, &temp_result[camera_id])) {
-    // Copy the result if finished
-    pthread_mutex_lock(&opticflow_mutex);
-    opticflow_result[camera_id] = temp_result[camera_id];
-    opticflow_got_result[camera_id] = true;
-    pthread_mutex_unlock(&opticflow_mutex);
-  }
-  // Copy the state
-  // TODO : put accelerometer values at pose of img timestamp
-  //struct opticflow_state_t temp_state;
-  struct pose_t pose = get_rotation_at_timestamp(img->pprz_ts);
-  img->eulers = pose.eulers;
-
   // Split the image into two halves
   struct image_t left_img, right_img;
   memcpy(&left_img, img, sizeof(struct image_t));
@@ -213,15 +197,6 @@ struct image_t *opticflow_module_calc(struct image_t *img, uint8_t camera_id)
   // Adjust the buffer pointer for the right image
   right_img.buf = (uint8_t*)img->buf + img->w * img->h / 2;
 
-  // Do the optical flow calculation for the left half
-  static struct opticflow_result_t left_result;
-  if (opticflow_calc_frame(&opticflow[camera_id], &left_img, &left_result)) {
-    pthread_mutex_lock(&opticflow_mutex);
-    // Process the result for the left half
-    left_div_size = left_result.div_size;
-    pthread_mutex_unlock(&opticflow_mutex);
-  }
-
   // Do the optical flow calculation for the right half
   static struct opticflow_result_t right_result;
   if (opticflow_calc_frame(&opticflow[camera_id], &right_img, &right_result)) {
@@ -231,10 +206,39 @@ struct image_t *opticflow_module_calc(struct image_t *img, uint8_t camera_id)
     pthread_mutex_unlock(&opticflow_mutex);
   }
 
-  
+  PRINT("RIGHT SUCCESSFUL")
+
+  // Do the optical flow calculation for the left half
+  static struct opticflow_result_t left_result;
+  if (opticflow_calc_frame(&opticflow[camera_id], &left_img, &left_result)) {
+    pthread_mutex_lock(&opticflow_mutex);
+    // Process the result for the left half
+    left_div_size = left_result.div_size;
+    pthread_mutex_unlock(&opticflow_mutex);
+  }
+
+  PRINT("LEFT SUCCESSFUL")
+
+  // Copy the state
+  // TODO : put accelerometer values at pose of img timestamp
+  //struct opticflow_state_t temp_state;
+  struct pose_t pose = get_rotation_at_timestamp(img->pprz_ts);
+  img->eulers = pose.eulers;
+
+  // Do the optical flow calculation
+  static struct opticflow_result_t
+    temp_result[ACTIVE_CAMERAS]; // static so that the number of corners is kept between frames
+  if (opticflow_calc_frame(&opticflow[camera_id], img, &temp_result[camera_id])) {
+    // Copy the result if finished
+    pthread_mutex_lock(&opticflow_mutex);
+    opticflow_result[camera_id] = temp_result[camera_id];
+    opticflow_got_result[camera_id] = true;
+    pthread_mutex_unlock(&opticflow_mutex);
+  }
+
+  PRINT("TOTAL SUCCESSFUL")
 
   opticflow_got_result[0] = true;
-
 
   return img;
 }
