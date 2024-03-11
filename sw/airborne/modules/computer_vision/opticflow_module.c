@@ -143,7 +143,7 @@ void opticflow_module_run(void)
   //                            3.0,
   //                            3.0,
   //                            3.0);
-  // pthread_mutex_lock(&opticflow_mutex);
+  pthread_mutex_lock(&opticflow_mutex);
   if (opticflow_got_result[0]) {
       AbiSendMsgOPTICAL_FLOW(FLOW_OPTICFLOW_ID, 
                             // now_ts,
@@ -171,7 +171,7 @@ void opticflow_module_run(void)
   //     // }
       opticflow_got_result[0] = false;
   }
-  // pthread_mutex_unlock(&opticflow_mutex);
+  pthread_mutex_unlock(&opticflow_mutex);
 }
 
 /**
@@ -190,6 +190,12 @@ struct image_t *opticflow_module_calc(struct image_t *img, uint8_t camera_id)
   memcpy(&left_img, img, sizeof(struct image_t));
   memcpy(&right_img, img, sizeof(struct image_t));
 
+  // Create unique instances of opticflow for each half and the whole image
+  struct opticflow_t right_opticflow, left_opticflow, total_opticflow;
+  memcpy(&right_opticflow, &opticflow[camera_id], sizeof(struct opticflow_t));
+  memcpy(&left_opticflow, &opticflow[camera_id], sizeof(struct opticflow_t));
+  memcpy(&total_opticflow, &opticflow[camera_id], sizeof(struct opticflow_t));
+
   // Adjust the width for both images
   left_img.w = img->w / 2;
   right_img.w = img->w / 2;
@@ -205,7 +211,7 @@ struct image_t *opticflow_module_calc(struct image_t *img, uint8_t camera_id)
 
   // Do the optical flow calculation for the right half
   static struct opticflow_result_t right_result;
-  if (opticflow_calc_frame(&opticflow[camera_id], &right_img, &right_result)) {
+  if (opticflow_calc_frame(&right_opticflow, &right_img, &right_result)) {
     pthread_mutex_lock(&opticflow_mutex);
     // Process the result for the right half
     right_div_size = right_result.div_size;
@@ -215,15 +221,13 @@ struct image_t *opticflow_module_calc(struct image_t *img, uint8_t camera_id)
 
   // Do the optical flow calculation for the left half
   static struct opticflow_result_t left_result;
-  if (opticflow_calc_frame(&opticflow[camera_id], &left_img, &left_result)) {
+  if (opticflow_calc_frame(&left_opticflow, &left_img, &left_result)) {
     pthread_mutex_lock(&opticflow_mutex);
     // Process the result for the left half
     left_div_size = left_result.div_size;
     pthread_mutex_unlock(&opticflow_mutex);
     PRINT("LEFT SUCCESSFUL");
   }
-
-  
 
   // Do the optical flow calculation
   static struct opticflow_result_t
