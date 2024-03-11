@@ -197,6 +197,12 @@ struct image_t *opticflow_module_calc(struct image_t *img, uint8_t camera_id)
   // Adjust the buffer pointer for the right image
   right_img.buf = (uint8_t*)img->buf + img->w * img->h / 2;
 
+  // Copy the state
+  // TODO : put accelerometer values at pose of img timestamp
+  //struct opticflow_state_t temp_state;
+  struct pose_t pose = get_rotation_at_timestamp(img->pprz_ts);
+  img->eulers = pose.eulers;
+
   // Do the optical flow calculation for the right half
   static struct opticflow_result_t right_result;
   if (opticflow_calc_frame(&opticflow[camera_id], &right_img, &right_result)) {
@@ -217,11 +223,7 @@ struct image_t *opticflow_module_calc(struct image_t *img, uint8_t camera_id)
     PRINT("LEFT SUCCESSFUL");
   }
 
-  // Copy the state
-  // TODO : put accelerometer values at pose of img timestamp
-  //struct opticflow_state_t temp_state;
-  struct pose_t pose = get_rotation_at_timestamp(img->pprz_ts);
-  img->eulers = pose.eulers;
+  
 
   // Do the optical flow calculation
   static struct opticflow_result_t
