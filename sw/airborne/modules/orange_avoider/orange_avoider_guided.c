@@ -163,21 +163,21 @@ void orange_avoider_guided_periodic(void)
     obstacle_free_confidence -= 2;  // be more cautious with positive obstacle detections
   }
 
-  if(left_divergence,Left_divergence_threshold){
+  if(left_divergence < Left_divergence_threshold){
     obstacle_free_confidence++;
-  }
+  
   } else {
     obstacle_free_confidence -= 2;  // be more cautious with positive obstacle detections
-  
-  if(left_divergence,Left_divergence_threshold){
-    obstacle_free_confidence++;
   }
+  if(left_divergence < Left_divergence_threshold){
+    obstacle_free_confidence++;
+  
   } else {
     obstacle_free_confidence -= 2;  // be more cautious with positive obstacle detections
-  
-  if(left_divergence,Left_divergence_threshold){
-    obstacle_free_confidence++;
   }
+  if(left_divergence < Left_divergence_threshold){
+    obstacle_free_confidence++;
+    
   } else {
     obstacle_free_confidence -= 2;  // be more cautious with positive obstacle detections
   }
@@ -195,9 +195,9 @@ void orange_avoider_guided_periodic(void)
         navigation_state = OBSTACLE_FOUND;
       }  else {
         // Check for divergence thresholds
-        if (Left_divergence >= Left_divergence_threshold) {
+        if (left_divergence >= Left_divergence_threshold) {
           navigation_state = LEFT_DIVERGENCE_EXCEEDED;
-        } else if (Right_divergence >= Right_divergence_threshold) {
+        } else if (right_divergence >= Right_divergence_threshold) {
           navigation_state = RIGHT_DIVERGENCE_EXCEEDED;
         } else if (total_divergence >= total_divergence_threshold) {
           navigation_state = TOTAL_DIVERGENCE_EXCEEDED;
