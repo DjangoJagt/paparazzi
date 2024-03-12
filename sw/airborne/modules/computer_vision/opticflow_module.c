@@ -222,27 +222,27 @@ struct image_t *opticflow_module_calc(struct image_t *img, uint8_t camera_id)
   }
   pthread_mutex_unlock(&opticflow_mutex);
 
-  // Do the optical flow calculation for the left half
-  static struct opticflow_result_t temp_left_result[ACTIVE_CAMERAS];
-  pthread_mutex_lock(&opticflow_mutex);
-  if (opticflow_calc_frame(&left_opticflow[camera_id], &left_img, &temp_left_result[camera_id])) {
-    // Process the result for the left half
-    left_opticflow_result[camera_id] = temp_left_result[camera_id];
-    left_div_size = left_opticflow_result[camera_id].div_size;
-    PRINT("LEFT SUCCESSFUL");
-  }
-  pthread_mutex_unlock(&opticflow_mutex);
-
-  // // Do the optical flow calculation
-  // static struct opticflow_result_t temp_result[ACTIVE_CAMERAS]; // static so that the number of corners is kept between frames
-  // if (opticflow_calc_frame(&opticflow[camera_id], img, &temp_result[camera_id])) {
-  //   // Copy the result if finished
-  //   pthread_mutex_lock(&opticflow_mutex);
-  //   opticflow_result[camera_id] = temp_result[camera_id];
-  //   // opticflow_got_result[camera_id] = true;
-  //   pthread_mutex_unlock(&opticflow_mutex);
-  //   PRINT("TOTAL SUCCESSFUL");
+  // // Do the optical flow calculation for the left half
+  // static struct opticflow_result_t temp_left_result[ACTIVE_CAMERAS];
+  // pthread_mutex_lock(&opticflow_mutex);
+  // if (opticflow_calc_frame(&left_opticflow[camera_id], &left_img, &temp_left_result[camera_id])) {
+  //   // Process the result for the left half
+  //   left_opticflow_result[camera_id] = temp_left_result[camera_id];
+  //   left_div_size = left_opticflow_result[camera_id].div_size;
+  //   PRINT("LEFT SUCCESSFUL");
   // }
+  // pthread_mutex_unlock(&opticflow_mutex);
+
+  // Do the optical flow calculation
+  static struct opticflow_result_t temp_result[ACTIVE_CAMERAS]; // static so that the number of corners is kept between frames
+  pthread_mutex_lock(&opticflow_mutex);
+  if (opticflow_calc_frame(&opticflow[camera_id], img, &temp_result[camera_id])) {
+    // Copy the result if finished
+    opticflow_result[camera_id] = temp_result[camera_id];
+    // opticflow_got_result[camera_id] = true;
+    PRINT("TOTAL SUCCESSFUL");
+    pthread_mutex_unlock(&opticflow_mutex);
+  }
 
   opticflow_got_result[0] = true;
 
