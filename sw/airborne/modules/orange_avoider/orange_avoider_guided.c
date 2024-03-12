@@ -70,6 +70,10 @@ int16_t obstacle_free_confidence = 0;   // a measure of how certain we are that 
 
 const int16_t max_trajectory_confidence = 5;  // number of consecutive negative object detections to be sure we are obstacle free
 
+float left_divergence = 0;
+float right_divergence = 0;
+float total_divergence = 0;
+
 // This call back will be used to receive the color count from the orange detector
 #ifndef ORANGE_AVOIDER_VISUAL_DETECTION_ID
 #error This module requires two color filters, as such you have to define ORANGE_AVOIDER_VISUAL_DETECTION_ID to the orange filter
@@ -98,17 +102,16 @@ static void floor_detection_cb(uint8_t __attribute__((unused)) sender_id,
   floor_centroid = pixel_y;
 }
 //OPTICAL FLOW IMPLEMENTATION CHECK!!
-#ifndef OPTICALFLOW_ID
+#ifndef OPTICALFLOW_LEFT_RIGHT_ID
+#define OPTICALFLOW_LEFT_RIGHT_ID ABI_BROADCAST
 #endif
-static abi_event opticflow_detection_ev;
-static void opticflow_detection_cb(uint8_t __attribute__((unused)) sender_id,
-                               int16_t __attribute__((unused)) pixel_x, int16_t pixel_y,
-                               int16_t __attribute__((unused)) pixel_width, int16_t __attribute__((unused)) pixel_height,
-                               int32_t quality, int16_t __attribute__((unused)) extra)
-{
-leftdivergence=Leftdivergence;
-rightdivergence=Rightdivergence;
-totaldivergence=Totaldivergence;
+static abi_event left_right_div_ev;
+static void left_right_div_cb(uint8_t sender_id, float left_div_size,
+                              float right_div_size,
+                              float size_divergence) {
+  left_divergence = left_div_size;
+  right_divergence = right_div_size;
+  total_divergence = size_divergence;
 }
 
 /*
@@ -123,6 +126,7 @@ void orange_avoider_guided_init(void)
   // bind our colorfilter callbacks to receive the color filter outputs
   AbiBindMsgVISUAL_DETECTION(ORANGE_AVOIDER_VISUAL_DETECTION_ID, &color_detection_ev, color_detection_cb);
   AbiBindMsgVISUAL_DETECTION(FLOOR_VISUAL_DETECTION_ID, &floor_detection_ev, floor_detection_cb);
+  AbiBindMsgOPTICAL_FLOW(OPTICALFLOW_LEFT_RIGHT_ID, &left_right_div_ev, left_right_div_cb);
 }
 
 /*
