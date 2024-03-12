@@ -157,6 +157,7 @@ void orange_avoider_guided_periodic(void)
   VERBOSE_PRINT("Floor centroid: %f\n", floor_centroid_frac);
 
   VERBOSE_PRINT("TOTAL_DIV %f\n", total_divergence);
+  VERBOSE_PRINT("obstacle confidence %d\n", obstacle_free_confidence);
 
   // update our safe confidence using color threshold
   if(color_count < color_count_threshold){
