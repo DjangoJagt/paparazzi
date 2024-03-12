@@ -241,8 +241,8 @@ struct image_t *opticflow_module_calc(struct image_t *img, uint8_t camera_id)
     opticflow_result[camera_id] = temp_result[camera_id];
     // opticflow_got_result[camera_id] = true;
     PRINT("TOTAL SUCCESSFUL");
-    pthread_mutex_unlock(&opticflow_mutex);
   }
+  pthread_mutex_unlock(&opticflow_mutex);
 
   opticflow_got_result[0] = true;
 
