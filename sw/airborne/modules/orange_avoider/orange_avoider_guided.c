@@ -171,13 +171,13 @@ void orange_avoider_guided_periodic(void)
   } else {
     obstacle_free_confidence -= 2;  // be more cautious with positive obstacle detections
   }
-  if(left_divergence < Left_divergence_threshold){
+  if(right_divergence < Right_divergence_threshold){
     obstacle_free_confidence++;
   
   } else {
     obstacle_free_confidence -= 2;  // be more cautious with positive obstacle detections
   }
-  if(left_divergence < Left_divergence_threshold){
+  if(total_divergence < Total_divergence_threshold){
     obstacle_free_confidence++;
 
   } else {
@@ -222,7 +222,7 @@ void orange_avoider_guided_periodic(void)
       guidance_h_set_heading_rate(avoidance_heading_direction * oag_heading_rate);
 
       // make sure we have a couple of good readings before declaring the way safe
-      if (obstacle_free_confidence >= 2){
+      if (obstacle_free_confidence >= 8){
         guidance_h_set_heading(stateGetNedToBodyEulers_f()->psi);
         navigation_state = SAFE;
       }
