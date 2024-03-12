@@ -177,7 +177,7 @@ void orange_avoider_guided_periodic(void)
   } else {
     obstacle_free_confidence -= 2;  // be more cautious with positive obstacle detections
   }
-  if(total_divergence < Total_divergence_threshold){
+  if(total_divergence < total_divergence_threshold){
     obstacle_free_confidence++;
 
   } else {
