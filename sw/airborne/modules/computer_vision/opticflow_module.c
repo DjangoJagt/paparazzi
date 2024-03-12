@@ -213,7 +213,7 @@ struct image_t *opticflow_module_calc(struct image_t *img, uint8_t camera_id)
 
   // Do the optical flow calculation for the right half
   static struct opticflow_result_t temp_right_result;
-  if (opticflow_calc_frame(&right_opticflow[camera_id], &right_img, &temp_right_result[camera_id])) {
+  if (opticflow_calc_frame(&right_opticflow[camera_id], right_img, &temp_right_result[camera_id])) {
     pthread_mutex_lock(&opticflow_mutex);
     // Process the result for the right half
     right_opticflow_result[camera_id] = temp_right_result[camera_id];
@@ -224,7 +224,7 @@ struct image_t *opticflow_module_calc(struct image_t *img, uint8_t camera_id)
 
   // Do the optical flow calculation for the left half
   static struct opticflow_result_t temp_left_result;
-  if (opticflow_calc_frame(&left_opticflow[camera_id], &left_img, &temp_left_result)) {
+  if (opticflow_calc_frame(&left_opticflow[camera_id], left_img, &temp_left_result)) {
     pthread_mutex_lock(&opticflow_mutex);
     // Process the result for the left half
     left_opticflow_result[camera_id] = temp_left_result[camera_id];
