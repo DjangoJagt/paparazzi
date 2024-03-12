@@ -69,10 +69,16 @@ PRINT_CONFIG_VAR(OPTICFLOW_FPS_CAMERA2)
 
 float left_div_size;
 float right_div_size;
+struct image_t reset_prev;
 
 /* The main opticflow variables */
 struct opticflow_t opticflow[ACTIVE_CAMERAS];                         ///< Opticflow calculations
 static struct opticflow_result_t opticflow_result[ACTIVE_CAMERAS];    ///< The opticflow result
+struct opticflow_t left_opticflow[ACTIVE_CAMERAS];                         ///< Opticflow calculations
+static struct opticflow_result_t left_opticflow_result[ACTIVE_CAMERAS];    ///< The opticflow result
+struct opticflow_t right_opticflow[ACTIVE_CAMERAS];                         ///< Opticflow calculations
+static struct opticflow_result_t right_opticflow_result[ACTIVE_CAMERAS];    ///< The opticflow result
+
 
 static bool opticflow_got_result[ACTIVE_CAMERAS];       ///< When we have an optical flow calculation
 static pthread_mutex_t opticflow_mutex;                  ///< Mutex lock fo thread safety
@@ -118,6 +124,8 @@ void opticflow_module_init(void)
   opticflow_got_result[0] = false;
 
   opticflow_calc_init(opticflow);
+  opticflow_calc_init(left_opticflow);
+  opticflow_calc_init(right_opticflow);
 
   cv_add_to_device(&OPTICFLOW_CAMERA, opticflow_module_calc, OPTICFLOW_FPS, 0);
 
@@ -190,14 +198,6 @@ struct image_t *opticflow_module_calc(struct image_t *img, uint8_t camera_id)
   memcpy(&left_img, img, sizeof(struct image_t));
   memcpy(&right_img, img, sizeof(struct image_t));
 
-  struct image_t reset_prev = opticflow[camera_id].prev_img_gray;
-
-  // // Create unique instances of opticflow for each half and the whole image
-  // struct opticflow_t right_opticflow, left_opticflow, total_opticflow;
-  // memcpy(&right_opticflow, &opticflow[camera_id], sizeof(struct opticflow_t));
-  // memcpy(&left_opticflow, &opticflow[camera_id], sizeof(struct opticflow_t));
-  // memcpy(&total_opticflow, &opticflow[camera_id], sizeof(struct opticflow_t));
-
   // Adjust the width for both images
   left_img.w = img->w / 2;
   right_img.w = img->w / 2;
@@ -212,37 +212,34 @@ struct image_t *opticflow_module_calc(struct image_t *img, uint8_t camera_id)
   img->eulers = pose.eulers;
 
   // Do the optical flow calculation for the right half
-  static struct opticflow_result_t right_result;
-  if (opticflow_calc_frame(&opticflow[camera_id], &right_img, &right_result)) {
+  static struct opticflow_result_t temp_right_result;
+  if (opticflow_calc_frame(&right_opticflow[camera_id], &right_img, &temp_right_result[camera_id])) {
     pthread_mutex_lock(&opticflow_mutex);
     // Process the result for the right half
-    right_div_size = right_result.div_size;
+    right_opticflow_result[camera_id] = temp_right_result[camera_id];
+    right_div_size = right_opticflow_result[camera_id].div_size;
     pthread_mutex_unlock(&opticflow_mutex);
     PRINT("RIGHT SUCCESSFUL");
   }
 
-  opticflow[camera_id]->prev_img_gray = reset_prev;
-
   // Do the optical flow calculation for the left half
-  static struct opticflow_result_t left_result;
-  if (opticflow_calc_frame(&opticflow[camera_id], &left_img, &left_result)) {
+  static struct opticflow_result_t temp_left_result;
+  if (opticflow_calc_frame(&left_opticflow[camera_id], &left_img, &temp_left_result)) {
     pthread_mutex_lock(&opticflow_mutex);
     // Process the result for the left half
-    left_div_size = left_result.div_size;
+    left_opticflow_result[camera_id] = temp_left_result[camera_id];
+    left_div_size = left_opticflow_result[camera_id].div_size;
     pthread_mutex_unlock(&opticflow_mutex);
     PRINT("LEFT SUCCESSFUL");
   }
 
-  opticflow[camera_id]->prev_img_gray = reset_prev;
-
   // Do the optical flow calculation
-  static struct opticflow_result_t
-    temp_result[ACTIVE_CAMERAS]; // static so that the number of corners is kept between frames
+  static struct opticflow_result_t temp_result[ACTIVE_CAMERAS]; // static so that the number of corners is kept between frames
   if (opticflow_calc_frame(&opticflow[camera_id], img, &temp_result[camera_id])) {
     // Copy the result if finished
     pthread_mutex_lock(&opticflow_mutex);
     opticflow_result[camera_id] = temp_result[camera_id];
-    opticflow_got_result[camera_id] = true;
+    // opticflow_got_result[camera_id] = true;
     pthread_mutex_unlock(&opticflow_mutex);
     PRINT("TOTAL SUCCESSFUL");
   }
