@@ -294,18 +294,18 @@ uint8_t chooseRandomIncrementAvoidance(void)
   }
   return false;
 }
-/*
- * Sets the variable 'incrementForAvoidance' randomly positive/negative
- */
-uint8_t chooseRandomIncrementAvoidance(void)
-{
-  // Randomly choose CW or CCW avoiding direction
-  if (rand() % 2 == 0) {
-    avoidance_heading_direction = 1.f;
-    VERBOSE_PRINT("Set avoidance increment to: %f\n", avoidance_heading_direction * oag_heading_rate);
-  } else {
-    avoidance_heading_direction = -1.f;
-    VERBOSE_PRINT("Set avoidance increment to: %f\n", avoidance_heading_direction * oag_heading_rate);
-  }
-  return false;
-}
+// /*
+//  * Sets the variable 'incrementForAvoidance' randomly positive/negative
+//  */
+// uint8_t chooseRandomIncrementAvoidance(void)
+// {
+//   // Randomly choose CW or CCW avoiding direction
+//   if (rand() % 2 == 0) {
+//     avoidance_heading_direction = 1.f;
+//     VERBOSE_PRINT("Set avoidance increment to: %f\n", avoidance_heading_direction * oag_heading_rate);
+//   } else {
+//     avoidance_heading_direction = -1.f;
+//     VERBOSE_PRINT("Set avoidance increment to: %f\n", avoidance_heading_direction * oag_heading_rate);
+//   }
+//   return false;
+// }
