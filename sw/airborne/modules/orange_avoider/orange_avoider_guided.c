@@ -49,9 +49,9 @@ enum navigation_state_t {
   SEARCH_FOR_SAFE_HEADING,
   OUT_OF_BOUNDS,
   REENTER_ARENA,
-  Left_divergence,
-  Right_divergence,
-  total_divergence
+  LEFT_DIVERGENCE_EXCEEDED,
+  RIGHT_DIVERGENCE_EXCEEDED,
+  TOTAL_DIVERGENCE_EXCEEDED
 };
 
 // define settings
@@ -228,7 +228,7 @@ void orange_avoider_guided_periodic(void)
 
     // TODO: SWITCHING TO NAVIGATIONSTATE SAFE AFTER TURN RIGHT/LEFT IS PROBABLY INCORRECT, CHECK WHETHER TO GO TO NAVIGATION STATE SEARCH FOR SAFE HEADING
 
-    
+
     case LEFT_DIVERGENCE_EXCEEDED:
       // Setup if left divergence is above threshold turn ... degrees right
       if (Leftdivergence >= Left_divergence_threshold) {
