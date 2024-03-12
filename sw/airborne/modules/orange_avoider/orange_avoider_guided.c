@@ -163,6 +163,25 @@ void orange_avoider_guided_periodic(void)
     obstacle_free_confidence -= 2;  // be more cautious with positive obstacle detections
   }
 
+  if(left_divergence,Left_divergence_threshold){
+    obstacle_free_confidence++;
+  }
+  } else {
+    obstacle_free_confidence -= 2;  // be more cautious with positive obstacle detections
+  
+  if(left_divergence,Left_divergence_threshold){
+    obstacle_free_confidence++;
+  }
+  } else {
+    obstacle_free_confidence -= 2;  // be more cautious with positive obstacle detections
+  
+  if(left_divergence,Left_divergence_threshold){
+    obstacle_free_confidence++;
+  }
+  } else {
+    obstacle_free_confidence -= 2;  // be more cautious with positive obstacle detections
+  }
+
   // bound obstacle_free_confidence
   Bound(obstacle_free_confidence, 0, max_trajectory_confidence);
 
