@@ -222,7 +222,6 @@ void opticflow_module_run(void)
 //   }
 //   pthread_mutex_unlock(&opticflow_mutex);
 
-<<<<<<< HEAD
 //   // Do the optical flow calculation for the left half
 //   static struct opticflow_result_t temp_left_result[ACTIVE_CAMERAS];
 //   pthread_mutex_lock(&opticflow_mutex);
@@ -233,22 +232,21 @@ void opticflow_module_run(void)
 //     PRINT("LEFT SUCCESSFUL");
 //   }
 //   pthread_mutex_unlock(&opticflow_mutex);
-=======
-<<<<<<< HEAD
-  opticflow[camera_id].prev_img_gray = reset_prev;
 
-  // Do the optical flow calculation for the left half
-  static struct opticflow_result_t left_result;
-  if (opticflow_calc_frame(&opticflow[camera_id], &left_img, &left_result)) {
-    pthread_mutex_lock(&opticflow_mutex);
-    // Process the result for the left half
-    left_div_size = left_result.div_size;
-    pthread_mutex_unlock(&opticflow_mutex);
-    PRINT("LEFT SUCCESSFUL");
-  }
+  // opticflow[camera_id].prev_img_gray = reset_prev;
 
-  opticflow[camera_id].prev_img_gray = reset_prev;
-=======
+  // // Do the optical flow calculation for the left half
+  // static struct opticflow_result_t left_result;
+  // if (opticflow_calc_frame(&opticflow[camera_id], &left_img, &left_result)) {
+  //   pthread_mutex_lock(&opticflow_mutex);
+  //   // Process the result for the left half
+  //   left_div_size = left_result.div_size;
+  //   pthread_mutex_unlock(&opticflow_mutex);
+  //   PRINT("LEFT SUCCESSFUL");
+  // }
+
+  // opticflow[camera_id].prev_img_gray = reset_prev;
+
   // // Do the optical flow calculation for the left half
   // static struct opticflow_result_t temp_left_result[ACTIVE_CAMERAS];
   // pthread_mutex_lock(&opticflow_mutex);
@@ -259,8 +257,6 @@ void opticflow_module_run(void)
   //   PRINT("LEFT SUCCESSFUL");
   // }
   // pthread_mutex_unlock(&opticflow_mutex);
->>>>>>> caf2d4fddc763a098afc973a59d7fadd46f865ba
->>>>>>> 48e4eda25e27f1ad079bde72c009c485a4e897e1
 
 //   // Do the optical flow calculation
 //   static struct opticflow_result_t temp_result[ACTIVE_CAMERAS]; // static so that the number of corners is kept between frames
