@@ -221,7 +221,7 @@ struct image_t *opticflow_module_calc(struct image_t *img, uint8_t camera_id)
     PRINT("RIGHT SUCCESSFUL");
   }
 
-  opticflow[camera_id]->prev_img_gray = reset_prev;
+  opticflow[camera_id].prev_img_gray = reset_prev;
 
   // Do the optical flow calculation for the left half
   static struct opticflow_result_t left_result;
@@ -233,7 +233,7 @@ struct image_t *opticflow_module_calc(struct image_t *img, uint8_t camera_id)
     PRINT("LEFT SUCCESSFUL");
   }
 
-  opticflow[camera_id]->prev_img_gray = reset_prev;
+  opticflow[camera_id].prev_img_gray = reset_prev;
 
   // Do the optical flow calculation
   static struct opticflow_result_t

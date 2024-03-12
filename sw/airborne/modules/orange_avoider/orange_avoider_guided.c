@@ -1,9 +1,8 @@
-/*
- * Copyright (C) Kirk Scheper <kirkscheper@gmail.com>
- *
- * This file is part of paparazzi
- *
- */
+// * Copyright (C) Kirk Scheper <kirkscheper@gmail.com>
+//  *
+//  * This file is part of paparazzi
+//  *
+//  */
 /**
  * @file "modules/orange_avoider/orange_avoider_guided.c"
  * @author Kirk Scheper
@@ -49,7 +48,10 @@ enum navigation_state_t {
   OBSTACLE_FOUND,
   SEARCH_FOR_SAFE_HEADING,
   OUT_OF_BOUNDS,
-  REENTER_ARENA
+  REENTER_ARENA,
+  Left_divergence,
+  Right_divergence,
+  total_divergence
 };
 
 // define settings
@@ -95,6 +97,19 @@ static void floor_detection_cb(uint8_t __attribute__((unused)) sender_id,
   floor_count = quality;
   floor_centroid = pixel_y;
 }
+//OPTICAL FLOW IMPLEMENTATION CHECK!!
+#ifndef OPTICALFLOW_ID
+#endif
+static abi_event opticflow_detection_ev;
+static void opticflow_detection_cb(uint8_t __attribute__((unused)) sender_id,
+                               int16_t __attribute__((unused)) pixel_x, int16_t pixel_y,
+                               int16_t __attribute__((unused)) pixel_width, int16_t __attribute__((unused)) pixel_height,
+                               int32_t quality, int16_t __attribute__((unused)) extra)
+{
+leftdivergence=Leftdivergence;
+rightdivergence=Rightdivergence;
+totaldivergence=Totaldivergence;
+}
 
 /*
  * Initialisation function
@@ -121,6 +136,12 @@ void orange_avoider_guided_periodic(void)
     obstacle_free_confidence = 0;
     return;
   }
+
+  //Determine divergence opticflow thresholds
+  float Left_divergence_threshold =0.15f;
+  float Right_divergence_threshold =0.15f;
+  float total_divergence_threshold =0.30f;
+
 
   // compute current color thresholds
   int32_t color_count_threshold = oag_color_count_frac * front_camera.output_size.w * front_camera.output_size.h;
@@ -149,10 +170,18 @@ void orange_avoider_guided_periodic(void)
         navigation_state = OUT_OF_BOUNDS;
       } else if (obstacle_free_confidence == 0){
         navigation_state = OBSTACLE_FOUND;
-      } else {
-        guidance_h_set_body_vel(speed_sp, 0);
+      }  else {
+        // Check for divergence thresholds
+        if (Left_divergence >= Left_divergence_threshold) {
+          navigation_state = LEFT_DIVERGENCE_EXCEEDED;
+        } else if (Right_divergence >= Right_divergence_threshold) {
+          navigation_state = RIGHT_DIVERGENCE_EXCEEDED;
+        } else if (total_divergence >= total_divergence_threshold) {
+          navigation_state = TOTAL_DIVERGENCE_EXCEEDED;
+        } else {
+          guidance_h_set_body_vel(speed_sp, 0);
+        }
       }
-
       break;
     case OBSTACLE_FOUND:
       // stop
@@ -196,12 +225,52 @@ void orange_avoider_guided_periodic(void)
         navigation_state = SAFE;
       }
       break;
+
+    // TODO: SWITCHING TO NAVIGATIONSTATE SAFE AFTER TURN RIGHT/LEFT IS PROBABLY INCORRECT, CHECK WHETHER TO GO TO NAVIGATION STATE SEARCH FOR SAFE HEADING
+
+    
+    case LEFT_DIVERGENCE_EXCEEDED:
+      // Setup if left divergence is above threshold turn ... degrees right
+      if (Leftdivergence >= Left_divergence_threshold) {
+        guidance_h_set_heading_rate(oag_heading_rate); // Turn right
+        navigation_state= SAFE;
+      }
+      break; 
+    case RIGHT_DIVERGENCE_EXCEEDED:
+      // Setup if right divergence is above threshold turn ... degrees left
+      if (Rightdivergence >= Right_divergence_threshold) {
+        guidance_h_set_heading_rate(-oag_heading_rate); // Turn Left
+        navigation_state= SAFE;
+      }
+      break; 
+    case TOTAL_DIVERGENCE_EXCEEDED:
+      // If total divergence is above threshold turn 180 degrees
+      if (Totaldivergence >= total_divergence_threshold) {
+        guidance_h_set_heading_rate(avoidance_heading_direction * RadOfDeg(180)); // Turn 180 degrees
+        navigation_state= SAFE;
+      }
+      break;
     default:
       break;
   }
   return;
 }
 
+/*
+ * Sets the variable 'incrementForAvoidance' randomly positive/negative
+ */
+uint8_t chooseRandomIncrementAvoidance(void)
+{
+  // Randomly choose CW or CCW avoiding direction
+  if (rand() % 2 == 0) {
+    avoidance_heading_direction = 1.f;
+    VERBOSE_PRINT("Set avoidance increment to: %f\n", avoidance_heading_direction * oag_heading_rate);
+  } else {
+    avoidance_heading_direction = -1.f;
+    VERBOSE_PRINT("Set avoidance increment to: %f\n", avoidance_heading_direction * oag_heading_rate);
+  }
+  return false;
+}
 /*
  * Sets the variable 'incrementForAvoidance' randomly positive/negative
  */
