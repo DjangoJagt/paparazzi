@@ -235,21 +235,21 @@ void orange_avoider_guided_periodic(void)
 
     case LEFT_DIVERGENCE_EXCEEDED:
       // Setup if left divergence is above threshold turn ... degrees right
-      if (Leftdivergence >= Left_divergence_threshold) {
+      if (leftdivergence >= Left_divergence_threshold) {
         guidance_h_set_heading_rate(oag_heading_rate); // Turn right
         navigation_state= SAFE;
       }
       break; 
     case RIGHT_DIVERGENCE_EXCEEDED:
       // Setup if right divergence is above threshold turn ... degrees left
-      if (Rightdivergence >= Right_divergence_threshold) {
+      if (rightdivergence >= Right_divergence_threshold) {
         guidance_h_set_heading_rate(-oag_heading_rate); // Turn Left
         navigation_state= SAFE;
       }
       break; 
     case TOTAL_DIVERGENCE_EXCEEDED:
       // If total divergence is above threshold turn 180 degrees
-      if (Totaldivergence >= total_divergence_threshold) {
+      if (totaldivergence >= total_divergence_threshold) {
         guidance_h_set_heading_rate(avoidance_heading_direction * RadOfDeg(180)); // Turn 180 degrees
         navigation_state= SAFE;
       }
