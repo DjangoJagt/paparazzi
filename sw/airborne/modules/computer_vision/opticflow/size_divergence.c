@@ -32,6 +32,12 @@
 #include "size_divergence.h"
 #include <stdlib.h>
 
+typedef struct {
+    float total_divergence;
+    float right_divergence;
+    float left_divergence;
+} DivergenceResult;
+
 /**
  * Get divergence from optical flow vectors based on line sizes between corners
  * @param[in] vectors    The optical flow vectors
@@ -39,21 +45,33 @@
  * @param[in] n_samples  The number of line segments that will be taken into account. 0 means all line segments will be considered.
  * @return divergence
  */
-float get_size_divergence(struct flow_t *vectors, int count, int n_samples)
+DivergenceResult get_size_divergence(struct flow_t *vectors, int count, int n_samples)
 {
   float distance_1, distance_2;
   float divs_sum = 0.f;
+  float divs_sum_left = 0.f;
+  float divs_sum_right = 0.f;
   uint32_t used_samples = 0;
+  uint32_t used_samples_left = 0;
+  uint32_t used_samples_right = 0;
+
   float dx, dy;
   int32_t i, j;
 
   int32_t max_samples = (count * count - count) / 2;
 
   if (count < 2) {
-    return 0.f;
+    return (DivergenceResult){0.f, 0.f, 0.f};
   } else if (count >= max_samples) {
     n_samples = 0;
   }
+
+  float center_x = 0.0f;
+  for (int i = 0; i < count; i++) {
+    center_x += vectors[i].pos.x;
+  }
+
+  center_x /= count;
 
   if (n_samples == 0) {
     // go through all possible lines:
@@ -72,6 +90,14 @@ float get_size_divergence(struct flow_t *vectors, int count, int n_samples)
         dx = (float)vectors[i].pos.x + (float)vectors[i].flow_x - (float)vectors[j].pos.x - (float)vectors[j].flow_x;
         dy = (float)vectors[i].pos.y + (float)vectors[i].flow_y - (float)vectors[j].pos.y - (float)vectors[j].flow_y;
         distance_2 = sqrtf(dx * dx + dy * dy);
+
+        if (vectors[i].pos.x < center_x && vectors[j].pos.x < center_x) {
+          divs_sum_left += (distance_2 - distance_1) / distance_1;
+          used_samples_left++;
+        } else if (vectors[i].pos.x > center_x && vectors[j].pos.x > center_x) {
+          divs_sum_right += (distance_2 - distance_1) / distance_1;
+          used_samples_right++;
+        }
 
         divs_sum += (distance_2 - distance_1) / distance_1;
         used_samples++;
@@ -102,15 +128,23 @@ float get_size_divergence(struct flow_t *vectors, int count, int n_samples)
       dy = (float)vectors[i].pos.y + (float)vectors[i].flow_y - (float)vectors[j].pos.y - (float)vectors[j].flow_y;
       distance_2 = sqrtf(dx * dx + dy * dy);
 
+    if (vectors[i].pos.x < center_x && vectors[j].pos.x < center_x) {
+          divs_sum_left += (distance_2 - distance_1) / distance_1;
+          used_samples_left++;
+        } else if (vectors[i].pos.x > center_x && vectors[j].pos.x > center_x) {
+          divs_sum_right += (distance_2 - distance_1) / distance_1;
+          used_samples_right++;
+        }
+
       divs_sum += (distance_2 - distance_1) / distance_1;
       used_samples++;
     }
   }
 
-  if (used_samples < 1){
-    return 0.f;
-  }
+  float total_divergence = used_samples > 0 ? divs_sum / used_samples : 0.f;
+  float right_divergence = used_samples_right > 0 ? divs_sum_right / used_samples_right : 0.f;
+  float left_divergence = used_samples_left > 0 ? divs_sum_left / used_samples_left : 0.f;
 
   // return the calculated mean divergence:
-  return divs_sum / used_samples;
+  return (DivergenceResult){total_divergence, right_divergence, left_divergence};
 }

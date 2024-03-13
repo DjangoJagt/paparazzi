@@ -375,6 +375,11 @@ PRINT_CONFIG_VAR(OPTICFLOW_TRACK_BACK_CAMERA2)
 PRINT_CONFIG_VAR(OPTICFLOW_SHOW_FLOW)
 PRINT_CONFIG_VAR(OPTICFLOW_SHOW_FLOW_CAMERA2)
 
+typedef struct {
+    float total_divergence;
+    float right_divergence;
+    float left_divergence;
+} DivergenceResult;
 
 //Include median filter
 #include "filters/median_filter.h"
@@ -662,11 +667,13 @@ bool calc_fast9_lukas_kanade(struct opticflow_t *opticflow, struct image_t *img,
   }
 
   static int n_samples = 100;
+
+  DivergenceResult result_left_right = {0.f, 0.f, 0.f};
   // Estimate size divergence:
   if (SIZE_DIV) {
-    result->div_size = get_size_divergence(vectors, result->tracked_cnt, n_samples);// * result->fps;
+    result_left_right = get_size_divergence(vectors, result->tracked_cnt, n_samples);// * result->fps;
   } else {
-    result->div_size = 0.0f;
+    result_left_right = {0.f, 0.f, 0.f};
   }
 
   if (LINEAR_FIT) {
