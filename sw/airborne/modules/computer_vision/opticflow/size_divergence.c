@@ -45,7 +45,7 @@ typedef struct {
  * @param[in] n_samples  The number of line segments that will be taken into account. 0 means all line segments will be considered.
  * @return divergence
  */
-DivergenceResult get_size_divergence(struct flow_t *vectors, int count, int n_samples)
+void get_size_divergence(struct flow_t *vectors, int count, int n_samples, DivergenceResult *div_result)
 {
   float distance_1, distance_2;
   float divs_sum = 0.f;
@@ -61,7 +61,9 @@ DivergenceResult get_size_divergence(struct flow_t *vectors, int count, int n_sa
   int32_t max_samples = (count * count - count) / 2;
 
   if (count < 2) {
-    return (DivergenceResult){0.f, 0.f, 0.f};
+      div_result->total_divergence = 0.f;
+      div_result->right_divergence = 0.f;
+      div_result->left_divergence = 0.f;
   } else if (count >= max_samples) {
     n_samples = 0;
   }
@@ -145,6 +147,8 @@ DivergenceResult get_size_divergence(struct flow_t *vectors, int count, int n_sa
   float right_divergence = used_samples_right > 0 ? divs_sum_right / used_samples_right : 0.f;
   float left_divergence = used_samples_left > 0 ? divs_sum_left / used_samples_left : 0.f;
 
-  // return the calculated mean divergence:
-  return (DivergenceResult){total_divergence, right_divergence, left_divergence};
+  div_result->total_divergence = used_samples > 0 ? divs_sum / used_samples : 0.f;
+  div_result->right_divergence = used_samples_right > 0 ? divs_sum_right / used_samples_right : 0.f;
+  div_result->left_divergence = used_samples_left > 0 ? divs_sum_left / used_samples_left : 0.f;
+
 }

@@ -497,7 +497,7 @@ void opticflow_calc_init(struct opticflow_t opticflow[])
  * @return Was optical flow successful
  */
 bool calc_fast9_lukas_kanade(struct opticflow_t *opticflow, struct image_t *img,
-                             struct opticflow_result_t *result)
+                             struct opticflow_result_t *result, DivergenceResult *div_result)
 {
   if (opticflow->just_switched_method) {
     // Create the image buffers
@@ -671,9 +671,9 @@ bool calc_fast9_lukas_kanade(struct opticflow_t *opticflow, struct image_t *img,
   DivergenceResult result_left_right = {0.f, 0.f, 0.f};
   // Estimate size divergence:
   if (SIZE_DIV) {
-    result_left_right = get_size_divergence(vectors, result->tracked_cnt, n_samples);// * result->fps;
+    get_size_divergence(vectors, result->tracked_cnt, n_samples, div_result);// * result->fps;
   } else {
-    result_left_right = {0.f, 0.f, 0.f};
+    // result_left_right = {0.f, 0.f, 0.f}; WHY IS THIS HERE? 
   }
 
   if (LINEAR_FIT) {
@@ -1186,7 +1186,7 @@ bool calc_edgeflow_tot(struct opticflow_t *opticflow, struct image_t *img,
  * @param[out] *result The optical flow result
  */
 bool opticflow_calc_frame(struct opticflow_t *opticflow, struct image_t *img,
-                          struct opticflow_result_t *result)
+                          struct opticflow_result_t *result, DivergenceResult *div_result)
 {
   bool flow_successful = false;
   // A switch counter that checks in the loop if the current method is similar,
@@ -1202,11 +1202,14 @@ bool opticflow_calc_frame(struct opticflow_t *opticflow, struct image_t *img,
   }
 
   // Switch between methods (0 = fast9/lukas-kanade, 1 = EdgeFlow)
-  if (opticflow->method == 0) {
-    flow_successful = calc_fast9_lukas_kanade(opticflow, img, result);
-  } else if (opticflow->method == 1) {
-    flow_successful = calc_edgeflow_tot(opticflow, img, result);
-  }
+  // if (opticflow->method == 0) {
+  //   flow_successful = calc_fast9_lukas_kanade(opticflow, img, result);
+  // } else if (opticflow->method == 1) {
+  //   flow_successful = calc_edgeflow_tot(opticflow, img, result);
+  // }
+
+  flow_successful = calc_fast9_lukas_kanade(opticflow, img, result, div_result);
+
   /* Rotate velocities from camera frame coordinates to body coordinates for control
   * IMPORTANT!!! This frame to body orientation should be the case for the Parrot
   * ARdrone and Bebop, however this can be different for other quadcopters

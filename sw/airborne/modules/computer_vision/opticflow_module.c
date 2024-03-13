@@ -69,17 +69,20 @@ PRINT_CONFIG_VAR(OPTICFLOW_FPS_CAMERA2)
 
 float left_div_size;
 float right_div_size;
-struct image_t reset_prev;
+float total_div_size;
 int counter = 0;
+
+typedef struct {
+    float total_divergence;
+    float right_divergence;
+    float left_divergence;
+} DivergenceResult;
+
+DivergenceResult divergence_left_right_result;
 
 /* The main opticflow variables */
 struct opticflow_t opticflow[ACTIVE_CAMERAS];                         ///< Opticflow calculations
 static struct opticflow_result_t opticflow_result[ACTIVE_CAMERAS];    ///< The opticflow result
-struct opticflow_t left_opticflow[ACTIVE_CAMERAS];                         ///< Opticflow calculations
-static struct opticflow_result_t left_opticflow_result[ACTIVE_CAMERAS];    ///< The opticflow result
-struct opticflow_t right_opticflow[ACTIVE_CAMERAS];                         ///< Opticflow calculations
-static struct opticflow_result_t right_opticflow_result[ACTIVE_CAMERAS];    ///< The opticflow result
-
 
 static bool opticflow_got_result[ACTIVE_CAMERAS];       ///< When we have an optical flow calculation
 static pthread_mutex_t opticflow_mutex;                  ///< Mutex lock fo thread safety
@@ -125,8 +128,6 @@ void opticflow_module_init(void)
   opticflow_got_result[0] = false;
 
   opticflow_calc_init(opticflow);
-  opticflow_calc_init(left_opticflow);
-  opticflow_calc_init(right_opticflow);
 
   cv_add_to_device(&OPTICFLOW_CAMERA, opticflow_module_calc, OPTICFLOW_FPS, 0);
 
@@ -163,7 +164,7 @@ void opticflow_module_run(void)
                             //  opticflow_result[idx_camera].noise_measurement,
                              left_div_size,
                              right_div_size,
-                             opticflow_result[0].div_size);
+                             total_div_size;)
   // // Update the stabilization loops on the current calculation
   // for (int idx_camera = 0; idx_camera < ACTIVE_CAMERAS; idx_camera++) {
     
@@ -192,79 +193,19 @@ void opticflow_module_run(void)
  * @return *img The processed image structurefsadfasdf
  */
 struct image_t *opticflow_module_calc(struct image_t *img, uint8_t camera_id) {
-    PRINT("Starting opticflow_module_calc\n");
-
-    if (counter >= 20){
-      counter = 0;
-    }
-
-    PRINT("COUNTER VAL: %d", counter);
-
-    struct image_t left_img, right_img;
-    memcpy(&left_img, img, sizeof(struct image_t));
-    memcpy(&right_img, img, sizeof(struct image_t));
-    // PRINT("Images copied\n");
-
-    left_img.w = img->w / 2;
-    right_img.w = img->w / 2;
-    // PRINT("Width adjusted: left_img.w = %u, right_img.w = %u\n", left_img.w, right_img.w);
-
-    right_img.buf = (uint8_t*)img->buf + img->w * img->h / 2;
-    // PRINT("Buffer pointer adjusted for the right image\n");
-
+    
     struct pose_t pose = get_rotation_at_timestamp(img->pprz_ts);
     img->eulers = pose.eulers;
-    // PRINT("State copied: pose and eulers\n");
-
-    // if (counter == 0) {
-    // static struct opticflow_result_t temp_right_result[ACTIVE_CAMERAS];
-    // pthread_mutex_lock(&opticflow_mutex);
-    // // PRINT("Mutex locked for right optic flow calculation\n");
-    
-    // if (opticflow_calc_frame(&right_opticflow[camera_id], &right_img, &temp_right_result[camera_id])) {
-    //     right_opticflow_result[camera_id] = temp_right_result[camera_id];
-    //     right_div_size = right_opticflow_result[camera_id].div_size;
-    //     PRINT("RIGHT SUCCESSFUL: right_div_size = %f\n", right_div_size);
-    //     opticflow_got_result[0] = true;
-    // }
-    // pthread_mutex_unlock(&opticflow_mutex);
-    // // PRINT("Mutex unlocked after right optic flow calculation\n");
-    // }
-
-    if (counter == 10) {
-
-    static struct opticflow_result_t temp_left_result[ACTIVE_CAMERAS];
+  
+    static struct opticflow_result_t temp_result[ACTIVE_CAMERAS]; 
     pthread_mutex_lock(&opticflow_mutex);
-    // PRINT("Mutex locked for left optic flow calculation\n");
-
-    if (opticflow_calc_frame(&left_opticflow[camera_id], &left_img, &temp_left_result[camera_id])) {
-        left_opticflow_result[camera_id] = temp_left_result[camera_id];
-        left_div_size = left_opticflow_result[camera_id].div_size;
-        PRINT("LEFT SUCCESSFUL: left_div_size = %f\n", left_div_size);
+    if (opticflow_calc_frame(&opticflow[camera_id], img, &temp_result[camera_id], &divergence_left_right_result)) {
+        left_div_size = divergence_left_right_result.left_divergence;
+        right_div_size = divergence_left_right_result.left_divergence;
+        total_div_size = divergence_left_right_result.total_divergence;
         opticflow_got_result[0] = true;
+        PRINT("SUCCESSFUL\n");
     }
     pthread_mutex_unlock(&opticflow_mutex);
-    // PRINT("Mutex unlocked after left optic flow calculation\n");
-
-    }
-
-    // if (counter == 99) {
-    // static struct opticflow_result_t temp_result[ACTIVE_CAMERAS]; 
-    // pthread_mutex_lock(&opticflow_mutex);
-    // // PRINT("Mutex locked for total optic flow calculation\n");
-
-    // if (opticflow_calc_frame(&opticflow[camera_id], img, &temp_result[camera_id])) {
-    //     opticflow_result[camera_id] = temp_result[camera_id];
-    //     opticflow_got_result[0] = true;
-    //     PRINT("TOTAL SUCCESSFUL\n");
-    // }
-    // pthread_mutex_unlock(&opticflow_mutex);
-    // // PRINT("Mutex unlocked after total optic flow calculation\n");
-    
-    // // PRINT("opticflow_got_result[0] set to true\n");
-    // }
-
-    counter++;
-
     return img;
 }
