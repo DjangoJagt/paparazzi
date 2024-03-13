@@ -85,6 +85,12 @@ struct opticflow_t {
   uint8_t id;
 };
 
+typedef struct {
+    float total_divergence;
+    float right_divergence;
+    float left_divergence;
+} DivergenceResult;
+
 #define FAST9_MAX_CORNERS 512
 
 extern void opticflow_calc_init(struct opticflow_t opticflow[]);
