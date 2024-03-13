@@ -143,6 +143,7 @@ void orange_avoider_periodic(void)
       chooseRandomIncrementAvoidance();
 
       navigation_state = SEARCH_FOR_SAFE_HEADING;
+      // Test if push works
 
       break;
     case SEARCH_FOR_SAFE_HEADING:
