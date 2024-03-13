@@ -223,7 +223,7 @@ struct image_t *opticflow_module_calc(struct image_t *img, uint8_t camera_id)
  * calculator
  * @param[in] *img The image_t structure of the captured image
  * @param[in] camera_id The camera index id
- * @return *img The processed image structure
+ * @return *img The processed image structurefsadfasdf
  */
 struct image_t *opticflow_module_calc(struct image_t *img, uint8_t camera_id) {
     PRINT("Starting opticflow_module_calc\n");
