@@ -192,7 +192,7 @@ void opticflow_module_run(void)
  * @return *img The processed image structurefsadfasdf
  */
 struct image_t *opticflow_module_calc(struct image_t *img, uint8_t camera_id) {
-    // PRINT("Starting opticflow_module_calc\n");
+    PRINT("Starting opticflow_module_calc\n");
 
     if (counter >= 100){
       counter = 0;
