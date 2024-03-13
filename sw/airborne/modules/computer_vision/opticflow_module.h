@@ -29,6 +29,7 @@
 
 // Include opticflow calculator
 #include "opticflow/opticflow_calculator.h"
+#include "divergence_common.h" // Include the common header
 
 // Needed for settings
 extern struct opticflow_t opticflow[];

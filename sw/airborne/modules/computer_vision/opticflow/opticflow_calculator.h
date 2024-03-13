@@ -36,6 +36,7 @@
 #include "inter_thread_data.h"
 #include "lib/vision/image.h"
 #include "lib/v4l/v4l2.h"
+#include "divergence_common.h" // Include the common header
 
 struct opticflow_t {
   bool got_first_img;                 ///< If we got a image to work with
@@ -84,12 +85,6 @@ struct opticflow_t {
   const struct video_config_t *camera;
   uint8_t id;
 };
-
-typedef struct {
-    float total_divergence;
-    float right_divergence;
-    float left_divergence;
-} DivergenceResult;
 
 #define FAST9_MAX_CORNERS 512
 

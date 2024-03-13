@@ -30,15 +30,11 @@
  */
 
 #include "lib/vision/image.h"
+#include "divergence_common.h" // Include the common header
 
 #ifndef SIZE_DIVERGENCE
 #define SIZE_DIVERGENCE
 
-typedef struct {
-    float total_divergence;
-    float right_divergence;
-    float left_divergence;
-} DivergenceResult;
 
 void get_size_divergence(struct flow_t *vectors, int count, int n_samples, DivergenceResult *div_result);
 float get_mean(float *numbers, int n_elements);
