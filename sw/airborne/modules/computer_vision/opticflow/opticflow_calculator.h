@@ -92,7 +92,7 @@ extern bool opticflow_calc_frame(struct opticflow_t *opticflow, struct image_t *
                                  struct opticflow_result_t *result);
 
 extern bool calc_fast9_lukas_kanade(struct opticflow_t *opticflow, struct image_t *img,
-                                    struct opticflow_result_t *result);
+                             struct opticflow_result_t *result, DivergenceResult *div_result)
 extern bool calc_edgeflow_tot(struct opticflow_t *opticflow, struct image_t *img,
                               struct opticflow_result_t *result);
 
