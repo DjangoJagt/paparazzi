@@ -189,40 +189,6 @@ void opticflow_module_run(void)
  * calculator
  * @param[in] *img The image_t structure of the captured image
  * @param[in] camera_id The camera index id
- * @return *img The processed image structure
- */
-struct image_t *opticflow_module_calc(struct image_t *img, uint8_t camera_id)
-{
-
-  if (counter >= 4) {
-    counter = 0;
-  }
-
-  if (counter == 2) {
-  // Do the optical flow calculation
-  static struct opticflow_result_t temp_result[ACTIVE_CAMERAS]; // static so that the number of corners is kept between frames
-  pthread_mutex_lock(&opticflow_mutex);
-  if (opticflow_calc_frame(&opticflow[camera_id], img, &temp_result[camera_id])) {
-    // Copy the result if finished
-    opticflow_result[camera_id] = temp_result[camera_id];
-    opticflow_got_result[camera_id] = true;
-    // PRINT("TOTAL SUCCESSFUL");
-  }
-  pthread_mutex_unlock(&opticflow_mutex);
-  }
-
-  counter += 1;
-
-  return img;
-}
-
-
-/**
- * The main optical flow calculation thread
- * This thread passes the images trough the optical flow
- * calculator
- * @param[in] *img The image_t structure of the captured image
- * @param[in] camera_id The camera index id
  * @return *img The processed image structurefsadfasdf
  */
 struct image_t *opticflow_module_calc(struct image_t *img, uint8_t camera_id) {
