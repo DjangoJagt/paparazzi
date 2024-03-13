@@ -497,7 +497,7 @@ void opticflow_calc_init(struct opticflow_t opticflow[])
  * @return Was optical flow successful
  */
 bool calc_fast9_lukas_kanade(struct opticflow_t *opticflow, struct image_t *img,
-                             struct opticflow_result_t *result, DivergenceResult *div_result)
+                             struct opticflow_result_t *result, struct DivergenceResult *div_result)
 {
   if (opticflow->just_switched_method) {
     // Create the image buffers

@@ -85,7 +85,7 @@ struct opticflow_t {
   uint8_t id;
 };
 
-typedef struct {
+struct DivergenceResult {
     float total_divergence;
     float right_divergence;
     float left_divergence;
