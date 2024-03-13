@@ -70,6 +70,7 @@ PRINT_CONFIG_VAR(OPTICFLOW_FPS_CAMERA2)
 float left_div_size;
 float right_div_size;
 struct image_t reset_prev;
+int counter = 0;
 
 /* The main opticflow variables */
 struct opticflow_t opticflow[ACTIVE_CAMERAS];                         ///< Opticflow calculations
@@ -193,6 +194,10 @@ void opticflow_module_run(void)
 struct image_t *opticflow_module_calc(struct image_t *img, uint8_t camera_id)
 {
 
+  if (counter >= 2) {
+    counter = 0;
+  }
+
   // Split the image into two halves
   struct image_t left_img, right_img;
   memcpy(&left_img, img, sizeof(struct image_t));
@@ -211,28 +216,33 @@ struct image_t *opticflow_module_calc(struct image_t *img, uint8_t camera_id)
   struct pose_t pose = get_rotation_at_timestamp(img->pprz_ts);
   img->eulers = pose.eulers;
 
-  // // Do the optical flow calculation for the right half
-  // static struct opticflow_result_t temp_right_result[ACTIVE_CAMERAS];
-  // pthread_mutex_lock(&opticflow_mutex);
-  // if (opticflow_calc_frame(&right_opticflow[camera_id], &right_img, &temp_right_result[camera_id])) {
-  //   // Process the result for the right half
-  //   right_opticflow_result[camera_id] = temp_right_result[camera_id];
-  //   right_div_size = right_opticflow_result[camera_id].div_size;
-  //   PRINT("RIGHT SUCCESSFUL");
-  // }
-  // pthread_mutex_unlock(&opticflow_mutex);
+  if (counter == 0) {
+  // Do the optical flow calculation for the right half
+  static struct opticflow_result_t temp_right_result[ACTIVE_CAMERAS];
+  pthread_mutex_lock(&opticflow_mutex);
+  if (opticflow_calc_frame(&right_opticflow[camera_id], &right_img, &temp_right_result[camera_id])) {
+    // Process the result for the right half
+    right_opticflow_result[camera_id] = temp_right_result[camera_id];
+    right_div_size = right_opticflow_result[camera_id].div_size;
+    PRINT("RIGHT SUCCESSFUL");
+  }
+  pthread_mutex_unlock(&opticflow_mutex);
+  }
 
-  // // Do the optical flow calculation for the left half
-  // static struct opticflow_result_t temp_left_result[ACTIVE_CAMERAS];
-  // pthread_mutex_lock(&opticflow_mutex);
-  // if (opticflow_calc_frame(&left_opticflow[camera_id], &left_img, &temp_left_result[camera_id])) {
-  //   // Process the result for the left half
-  //   left_opticflow_result[camera_id] = temp_left_result[camera_id];
-  //   left_div_size = left_opticflow_result[camera_id].div_size;
-  //   PRINT("LEFT SUCCESSFUL");
-  // }
-  // pthread_mutex_unlock(&opticflow_mutex);
+  if (counter == 1) {
+  // Do the optical flow calculation for the left half
+  static struct opticflow_result_t temp_left_result[ACTIVE_CAMERAS];
+  pthread_mutex_lock(&opticflow_mutex);
+  if (opticflow_calc_frame(&left_opticflow[camera_id], &left_img, &temp_left_result[camera_id])) {
+    // Process the result for the left half
+    left_opticflow_result[camera_id] = temp_left_result[camera_id];
+    left_div_size = left_opticflow_result[camera_id].div_size;
+    PRINT("LEFT SUCCESSFUL");
+  }
+  pthread_mutex_unlock(&opticflow_mutex);
+  }
 
+  if (counter == 2) {
   // Do the optical flow calculation
   static struct opticflow_result_t temp_result[ACTIVE_CAMERAS]; // static so that the number of corners is kept between frames
   pthread_mutex_lock(&opticflow_mutex);
@@ -243,8 +253,11 @@ struct image_t *opticflow_module_calc(struct image_t *img, uint8_t camera_id)
     // PRINT("TOTAL SUCCESSFUL");
   }
   pthread_mutex_unlock(&opticflow_mutex);
+  }
 
   opticflow_got_result[0] = true;
+
+  counter += 1;
 
   return img;
 }
