@@ -375,11 +375,11 @@ PRINT_CONFIG_VAR(OPTICFLOW_TRACK_BACK_CAMERA2)
 PRINT_CONFIG_VAR(OPTICFLOW_SHOW_FLOW)
 PRINT_CONFIG_VAR(OPTICFLOW_SHOW_FLOW_CAMERA2)
 
-typedef struct {
-    float total_divergence;
-    float right_divergence;
-    float left_divergence;
-} DivergenceResult;
+// typedef struct {
+//     float total_divergence;
+//     float right_divergence;
+//     float left_divergence;
+// } DivergenceResult;
 
 //Include median filter
 #include "filters/median_filter.h"
