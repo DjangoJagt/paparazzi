@@ -72,12 +72,6 @@ float right_div_size;
 float total_div_size;
 int counter = 0;
 
-typedef struct {
-    float total_divergence;
-    float right_divergence;
-    float left_divergence;
-} DivergenceResult;
-
 DivergenceResult divergence_left_right_result;
 
 /* The main opticflow variables */
