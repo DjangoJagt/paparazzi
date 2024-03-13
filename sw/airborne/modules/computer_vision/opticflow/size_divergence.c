@@ -32,11 +32,11 @@
 #include "size_divergence.h"
 #include <stdlib.h>
 
-typedef struct {
-    float total_divergence;
-    float right_divergence;
-    float left_divergence;
-} DivergenceResult;
+// typedef struct {
+//     float total_divergence;
+//     float right_divergence;
+//     float left_divergence;
+// } DivergenceResult;
 
 /**
  * Get divergence from optical flow vectors based on line sizes between corners
