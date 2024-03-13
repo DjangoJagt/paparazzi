@@ -158,7 +158,7 @@ void opticflow_module_run(void)
                             //  opticflow_result[idx_camera].noise_measurement,
                              left_div_size,
                              right_div_size,
-                             total_div_size;)
+                             total_div_size;);
   // // Update the stabilization loops on the current calculation
   // for (int idx_camera = 0; idx_camera < ACTIVE_CAMERAS; idx_camera++) {
     
