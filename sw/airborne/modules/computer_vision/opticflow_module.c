@@ -194,9 +194,11 @@ void opticflow_module_run(void)
 struct image_t *opticflow_module_calc(struct image_t *img, uint8_t camera_id) {
     PRINT("Starting opticflow_module_calc\n");
 
-    if (counter >= 10000){
+    if (counter >= 100){
       counter = 0;
     }
+
+    PRINT("COUNTER VAL: %d", counter);
 
     struct image_t left_img, right_img;
     memcpy(&left_img, img, sizeof(struct image_t));
@@ -228,7 +230,7 @@ struct image_t *opticflow_module_calc(struct image_t *img, uint8_t camera_id) {
     PRINT("Mutex unlocked after right optic flow calculation\n");
     }
 
-    if (counter == 5000) {
+    if (counter == 50) {
 
     static struct opticflow_result_t temp_left_result[ACTIVE_CAMERAS];
     pthread_mutex_lock(&opticflow_mutex);
@@ -244,7 +246,7 @@ struct image_t *opticflow_module_calc(struct image_t *img, uint8_t camera_id) {
 
     }
 
-    if (counter == 9500) {
+    if (counter == 99) {
     static struct opticflow_result_t temp_result[ACTIVE_CAMERAS]; 
     pthread_mutex_lock(&opticflow_mutex);
     PRINT("Mutex locked for total optic flow calculation\n");
