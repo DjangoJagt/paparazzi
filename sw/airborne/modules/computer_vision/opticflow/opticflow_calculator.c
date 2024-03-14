@@ -47,6 +47,9 @@
 #include "modules/sonar/agl_dist.h"
 #include "generated/airframe.h"
 
+
+#define PRINT(string, ...) fprintf(stderr, "[mav_exercise->%s()] " string,__FUNCTION__ , ##__VA_ARGS__)
+
 // to get the definition of front_camera / bottom_camera
 #include BOARD_CONFIG
 

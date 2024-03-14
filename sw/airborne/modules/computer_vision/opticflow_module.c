@@ -197,10 +197,9 @@ struct image_t *opticflow_module_calc(struct image_t *img, uint8_t camera_id) {
     pthread_mutex_lock(&opticflow_mutex);
     if (opticflow_calc_frame(&opticflow[camera_id], img, &temp_result[camera_id], &divergence_left_right_result)) {
         left_div_size = divergence_left_right_result.left_divergence;
-        right_div_size = divergence_left_right_result.left_divergence;
+        right_div_size = divergence_left_right_result.right_divergence;
         total_div_size = divergence_left_right_result.total_divergence;
         opticflow_got_result[0] = true;
-        PRINT("SUCCESSFUL\n");
     }
     pthread_mutex_unlock(&opticflow_mutex);
 
