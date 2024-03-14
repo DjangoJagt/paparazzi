@@ -75,9 +75,10 @@ void get_size_divergence(struct flow_t *vectors, int count, int n_samples, Diver
   for (int i = 0; i < count; i++) {
     center_x += vectors[i].pos.x;
   }
-  PRINT("VALUE OF CENTER_X: %f", center_x);
-
+  
   center_x /= count;
+  
+  PRINT("VALUE OF CENTER_X: %f", center_x);
 
   if (n_samples == 0) {
     // go through all possible lines:
