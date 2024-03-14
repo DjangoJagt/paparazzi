@@ -64,6 +64,7 @@ void get_size_divergence(struct flow_t *vectors, int count, int n_samples, Diver
       div_result->total_divergence = 0.f;
       div_result->right_divergence = 0.f;
       div_result->left_divergence = 0.f;
+      return;
   } else if (count >= max_samples) {
     n_samples = 0;
   }
@@ -143,9 +144,9 @@ void get_size_divergence(struct flow_t *vectors, int count, int n_samples, Diver
     }
   }
 
-  float total_divergence = used_samples > 0 ? divs_sum / used_samples : 0.f;
-  float right_divergence = used_samples_right > 0 ? divs_sum_right / used_samples_right : 0.f;
-  float left_divergence = used_samples_left > 0 ? divs_sum_left / used_samples_left : 0.f;
+  // float total_divergence = used_samples > 0 ? divs_sum / used_samples : 0.f;
+  // float right_divergence = used_samples_right > 0 ? divs_sum_right / used_samples_right : 0.f;
+  // float left_divergence = used_samples_left > 0 ? divs_sum_left / used_samples_left : 0.f;
 
   div_result->total_divergence = used_samples > 0 ? divs_sum / used_samples : 0.f;
   div_result->right_divergence = used_samples_right > 0 ? divs_sum_right / used_samples_right : 0.f;
