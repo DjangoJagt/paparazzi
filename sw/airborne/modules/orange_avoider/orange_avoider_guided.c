@@ -142,9 +142,9 @@ void orange_avoider_guided_periodic(void)
   }
 
   //Determine divergence opticflow thresholds
-  float Left_divergence_threshold =0.015f;
-  float Right_divergence_threshold =0.015f;
-  float total_divergence_threshold =0.030f;
+  float Left_divergence_threshold =0.0015f;
+  float Right_divergence_threshold =0.0015f;
+  float total_divergence_threshold =0.0030f;
 
 
   // compute current color thresholds
