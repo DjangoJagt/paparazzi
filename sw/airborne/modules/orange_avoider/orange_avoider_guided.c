@@ -166,26 +166,26 @@ void orange_avoider_guided_periodic(void)
     obstacle_free_confidence -= 2;  // be more cautious with positive obstacle detections
   }
 
-  if(left_divergence < Left_divergence_threshold){
-    obstacle_free_confidence++;
+  // if(left_divergence < Left_divergence_threshold){
+  //   obstacle_free_confidence++;
   
-  } else {
-    obstacle_free_confidence -= 2;  // be more cautious with positive obstacle detections
-  }
-  if(right_divergence < Right_divergence_threshold){
-    obstacle_free_confidence++;
+  // } else {
+  //   obstacle_free_confidence -= 2;  // be more cautious with positive obstacle detections
+  // }
+  // if(right_divergence < Right_divergence_threshold){
+  //   obstacle_free_confidence++;
   
-  } else {
-    obstacle_free_confidence -= 2;  // be more cautious with positive obstacle detections
-  }
-  if(total_divergence < total_divergence_threshold){
-    obstacle_free_confidence++;
+  // } else {
+  //   obstacle_free_confidence -= 2;  // be more cautious with positive obstacle detections
+  // }
+  // if(total_divergence < total_divergence_threshold){
+  //   obstacle_free_confidence++;
 
-  } else {
-    obstacle_free_confidence -= 2;  // be more cautious with positive obstacle detections
-  }
+  // } else {
+  //   obstacle_free_confidence -= 2;  // be more cautious with positive obstacle detections
+  // }
 
-  // bound obstacle_free_confidence
+  // // bound obstacle_free_confidence
   Bound(obstacle_free_confidence, 0, max_trajectory_confidence);
 
   float speed_sp = fminf(oag_max_speed, 0.2f * obstacle_free_confidence);
@@ -259,6 +259,7 @@ void orange_avoider_guided_periodic(void)
       // Setup if left divergence is above threshold turn ... degrees right
       if (left_divergence >= Left_divergence_threshold) {
         guidance_h_set_heading_rate(oag_heading_rate); // Turn right
+        PRINT("Mayday!\n");
         navigation_state= SEARCH_FOR_SAFE_HEADING;
       }
       break; 
@@ -266,6 +267,7 @@ void orange_avoider_guided_periodic(void)
       // Setup if right divergence is above threshold turn ... degrees left
       if (right_divergence >= Right_divergence_threshold) {
         guidance_h_set_heading_rate(-oag_heading_rate); // Turn Left
+        VERBOSE_PRINT("mayday!")
         navigation_state= SEARCH_FOR_SAFE_HEADING;
       }
       break; 
@@ -273,6 +275,7 @@ void orange_avoider_guided_periodic(void)
       // If total divergence is above threshold turn 180 degrees
       if (total_divergence >= total_divergence_threshold) {
         guidance_h_set_heading_rate(avoidance_heading_direction * RadOfDeg(180)); // Turn 180 degrees
+        VERBOSE_PRINT("mayday!")
         navigation_state= SEARCH_FOR_SAFE_HEADING;
       }
       break;
