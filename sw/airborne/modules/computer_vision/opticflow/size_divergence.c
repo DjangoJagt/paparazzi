@@ -32,6 +32,8 @@
 #include "size_divergence.h"
 #include <stdlib.h>
 
+#define PRINT(string, ...) fprintf(stderr, "[mav_exercise->%s()] " string,__FUNCTION__ , ##__VA_ARGS__)
+
 // typedef struct {
 //     float total_divergence;
 //     float right_divergence;
@@ -73,6 +75,7 @@ void get_size_divergence(struct flow_t *vectors, int count, int n_samples, Diver
   for (int i = 0; i < count; i++) {
     center_x += vectors[i].pos.x;
   }
+  PRINT("VALUE OF CENTER_X: %f", center_x);
 
   center_x /= count;
 
