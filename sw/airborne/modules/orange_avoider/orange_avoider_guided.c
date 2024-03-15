@@ -140,9 +140,9 @@ void orange_avoider_guided_periodic(void)
   }
 
   //Determine divergence opticflow thresholds
-  float Left_divergence_threshold =0.015f;
-  float Right_divergence_threshold =0.015f;
-  float total_divergence_threshold =0.030f;
+  float Left_divergence_threshold =0.0015f;
+  float Right_divergence_threshold =0.0015f;
+  float total_divergence_threshold =0.0030f;
 
 
   // compute current color thresholds
@@ -258,26 +258,26 @@ void orange_avoider_guided_periodic(void)
         // guidance_h_set_heading_rate(RadOfDeg(25)); // Turn right
         // navigation_state= SEARCH_FOR_SAFE_HEADING;
 
-        guidance_h_set_heading_rate(RadOfDeg(90.f));
-    
-      // make sure we have a couple of good readings before declaring the way safe
-      if(obstacle_free_confidence >= 2){
-        guidance_h_set_heading(stateGetNedToBodyEulers_f()->psi);
-        PRINT("LD->Rightturn!\n");
-        navigation_state = SAFE;
-      }
+       guidance_h_set_body_vel(0, 0);
+
+      // randomly select new search direction
+      guidance_h_set_heading_rate(RadOfDeg(50.f));
+      VERBOSE_PRINT("LD--> Right turn!\n");
+
+      navigation_state = SAFE;
       
       break; 
     case RIGHT_DIVERGENCE_EXCEEDED:
       // Setup if right divergence is above threshold turn ... degrees left
       //if (right_divergence >= Right_divergence_threshold) {
-        guidance_h_set_heading_rate(RadOfDeg(90.f));
-    
-      // make sure we have a couple of good readings before declaring the way safe
-      if(obstacle_free_confidence >= 2){
-        guidance_h_set_heading(stateGetNedToBodyEulers_f()->psi);
-        VERBOSE_PRINT("RD->leftturn!\n");
-        navigation_state= SAFE; 
+           // stop
+      guidance_h_set_body_vel(0, 0);
+
+      // randomly select new search direction
+      guidance_h_set_heading_rate(RadOfDeg(50.f));
+      VERBOSE_PRINT("RD--> Left turn!\n");
+
+      navigation_state = SAFE;
       
       break; 
     case TOTAL_DIVERGENCE_EXCEEDED:
@@ -287,7 +287,7 @@ void orange_avoider_guided_periodic(void)
       guidance_h_set_body_vel(0, 0);
 
       // randomly select new search direction
-      guidance_h_set_heading_rate(RadOfDeg(180.f));
+      guidance_h_set_heading_rate(RadOfDeg(90.f));
       VERBOSE_PRINT("TD->180 turn!\n");
 
       navigation_state = SAFE;
