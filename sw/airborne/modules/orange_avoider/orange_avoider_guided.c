@@ -58,7 +58,7 @@ enum navigation_state_t {
 float oag_color_count_frac = 0.18f;       // obstacle detection threshold as a fraction of total of image
 float oag_floor_count_frac = 0.05f;       // floor detection threshold as a fraction of total of image
 float oag_max_speed = 0.5f;               // max flight speed [m/s]
-float oag_heading_rate = RadOfDeg(20.f);  // heading change setpoint for avoidance [rad/s]
+float oag_heading_rate = RadOfDeg(10.f);  // heading change setpoint for avoidance [rad/s]
 
 // define and initialise global variables
 enum navigation_state_t navigation_state = SEARCH_FOR_SAFE_HEADING;   // current state in state machine
@@ -155,7 +155,7 @@ void orange_avoider_guided_periodic(void)
   // VERBOSE_PRINT("Floor centroid: %f\n", floor_centroid_frac);
 
   VERBOSE_PRINT("TOTAL_DIV %f, state: %d\n", total_divergence, navigation_state);
-  VERBOSE_PRINT("obstacle confidence %d\n", obstacle_free_confidence);
+  //VERBOSE_PRINT("obstacle confidence %d\n", obstacle_free_confidence);
 
   // update our safe confidence using color threshold
   if(color_count < color_count_threshold){
@@ -218,8 +218,7 @@ void orange_avoider_guided_periodic(void)
       break;
     case SEARCH_FOR_SAFE_HEADING:
       guidance_h_set_heading_rate(avoidance_heading_direction * oag_heading_rate);
-      VERBOSE_PRINT("SEARCH_FOR_SAFE_HEADING - Obstacle free confidence: %d\n", obstacle_free_confidence);
-
+    
       // make sure we have a couple of good readings before declaring the way safe
       if(obstacle_free_confidence >= 2){
         guidance_h_set_heading(stateGetNedToBodyEulers_f()->psi);
@@ -256,25 +255,29 @@ void orange_avoider_guided_periodic(void)
     case LEFT_DIVERGENCE_EXCEEDED:
       // Setup if left divergence is above threshold turn ... degrees right
       if (left_divergence >= Left_divergence_threshold) {
-        guidance_h_set_heading_rate(oag_heading_rate); // Turn right
-        PRINT("Mayday!\n");
+        guidance_h_set_heading_rate(avoidance_heading_direction * 10*oag_heading_rate); // Turn right
+        PRINT("LD->Rightturn!\n");
         navigation_state= SEARCH_FOR_SAFE_HEADING;
       }
       break; 
     case RIGHT_DIVERGENCE_EXCEEDED:
       // Setup if right divergence is above threshold turn ... degrees left
       if (right_divergence >= Right_divergence_threshold) {
-        guidance_h_set_heading_rate(-oag_heading_rate); // Turn Left
-        VERBOSE_PRINT("mayday!");
+        guidance_h_set_heading_rate(avoidance_heading_direction * 10*-oag_heading_rate); // Turn Left
+        VERBOSE_PRINT("RD->leftturn!\n");
         navigation_state= SEARCH_FOR_SAFE_HEADING;
       }
       break; 
     case TOTAL_DIVERGENCE_EXCEEDED:
       // If total divergence is above threshold turn 180 degrees
       if (total_divergence >= total_divergence_threshold) {
-        guidance_h_set_heading_rate(avoidance_heading_direction * RadOfDeg(180)); // Turn 180 degrees
-        VERBOSE_PRINT("mayday!");
-        navigation_state= SEARCH_FOR_SAFE_HEADING;
+         // stop
+      guidance_h_set_body_vel(0, 0);
+
+      // randomly select new search direction
+      chooseRandomIncrementAvoidance();
+
+      navigation_state = SEARCH_FOR_SAFE_HEADING;
       }
       break;
     default:
