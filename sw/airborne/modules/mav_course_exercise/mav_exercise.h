@@ -21,6 +21,10 @@
 #ifndef PAPARAZZI_MAV_EXERCISE_H
 #define PAPARAZZI_MAV_EXERCISE_H
 
+// float left_divergence;
+// float right_divergence;
+// float total_divergence;
+
 extern void mav_exercise_init(void);
 extern void mav_exercise_periodic(void);
 

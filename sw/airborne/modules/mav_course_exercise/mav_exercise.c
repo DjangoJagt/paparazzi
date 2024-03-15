@@ -51,9 +51,9 @@ float moveDistance = 2;                 // waypoint displacement [m]
 float oob_haeding_increment = 5.f;      // heading angle increment if out of bounds [deg]
 const int16_t max_trajectory_confidence = 5; // number of consecutive negative object detections to be sure we are obstacle free
 
-float left_divergence = 0;
-float right_divergence = 0;
-float total_divergence = 0;
+float left_divergence = 0.0f;
+float right_divergence = 0.0f;
+float total_divergence = 0.0f;
 
 // needed to receive output from a separate module running on a parallel process
 #ifndef ORANGE_AVOIDER_VISUAL_DETECTION_ID
