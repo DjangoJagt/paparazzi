@@ -32,6 +32,7 @@
 #include <time.h>
 #include <unistd.h>
 #include "std.h"
+#include "modules/core/abi.h"
 
 #include "mcu_periph/sys_time.h"
 #include "state.h"
@@ -49,6 +50,18 @@
 #ifndef LOGGER_FILE_PATH
 #define LOGGER_FILE_PATH /data/video/usb
 #endif
+
+#ifndef OPTICALFLOW_LEFT_RIGHT_ID
+#define OPTICALFLOW_LEFT_RIGHT_ID ABI_BROADCAST
+#endif
+static abi_event left_right_div_ev;
+static void left_right_div_cb(uint8_t sender_id, float left_div_size,
+                              float right_div_size,
+                              float size_divergence) {
+  left_divergence = left_div_size;
+  right_divergence = right_div_size;
+  total_divergence = size_divergence;
+}
 
 /** The file pointer */
 static FILE *logger_file = NULL;
@@ -68,6 +81,9 @@ static void logger_file_write_header(FILE *file) {
   fprintf(file, "vel_x,vel_y,vel_z,");
   fprintf(file, "att_phi,att_theta,att_psi,");
   fprintf(file, "rate_p,rate_q,rate_r,");
+  fprintf(file, "left_divergence");
+  fprintf(file, "right_divergence");
+  fprintf(file, "total_divergence");
 #ifdef BOARD_BEBOP
   fprintf(file, "rpm_obs_1,rpm_obs_2,rpm_obs_3,rpm_obs_4,");
   fprintf(file, "rpm_ref_1,rpm_ref_2,rpm_ref_3,rpm_ref_4,");
@@ -99,6 +115,9 @@ static void logger_file_write_row(FILE *file) {
   fprintf(file, "%f,%f,%f,", vel->x, vel->y, vel->z);
   fprintf(file, "%f,%f,%f,", att->phi, att->theta, att->psi);
   fprintf(file, "%f,%f,%f,", rates->p, rates->q, rates->r);
+  fprintf(file, "%f,", left_divergence);
+  fprintf(file, "%f,", right_divergence);
+  fprintf(file, "%f,", total_divergence);
 #ifdef BOARD_BEBOP
   fprintf(file, "%d,%d,%d,%d,",actuators_bebop.rpm_obs[0],actuators_bebop.rpm_obs[1],actuators_bebop.rpm_obs[2],actuators_bebop.rpm_obs[3]);
   fprintf(file, "%d,%d,%d,%d,",actuators_bebop.rpm_ref[0],actuators_bebop.rpm_ref[1],actuators_bebop.rpm_ref[2],actuators_bebop.rpm_ref[3]);
@@ -121,6 +140,8 @@ void logger_file_start(void)
 {
   // Ensure that the module is running when started with this function
   logger_file_logger_file_periodic_status = MODULES_RUN;
+
+  AbiBindMsgOPTICAL_FLOW(OPTICALFLOW_LEFT_RIGHT_ID, &left_right_div_ev, left_right_div_cb);
   
   // Create output folder if necessary
   if (access(STRINGIFY(LOGGER_FILE_PATH), F_OK)) {
