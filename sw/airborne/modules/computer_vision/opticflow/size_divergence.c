@@ -74,7 +74,7 @@ void get_size_divergence(struct flow_t *vectors, int count, int n_samples, Diver
   float center_x = 0.0f;
   for (int i = 0; i < count; i++) {
     center_x += vectors[i].pos.x;
-    PRINT("VECTOR_X POSITION: %f", vectors[i].pos.x);
+  //  PRINT("VECTOR_X POSITION: %f", vectors[i].pos.x);
   
   }
   

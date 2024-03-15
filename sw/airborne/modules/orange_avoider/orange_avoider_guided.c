@@ -76,8 +76,7 @@ float total_divergence = 0;
 
 // This call back will be used to receive the color count from the orange detector
 #ifndef ORANGE_AVOIDER_VISUAL_DETECTION_ID
-#error This module requires two color filters, as such you have to define ORANGE_AVOIDER_VISUAL_DETECTION_ID to the orange filter
-#error Please define ORANGE_AVOIDER_VISUAL_DETECTION_ID to be COLOR_OBJECT_DETECTION1_ID or COLOR_OBJECT_DETECTION2_ID in your airframe
+#define ORANGE_AVOIDER_VISUAL_DETECTION_ID ABI_BROADCAST
 #endif
 static abi_event color_detection_ev;
 static void color_detection_cb(uint8_t __attribute__((unused)) sender_id,
@@ -89,8 +88,7 @@ static void color_detection_cb(uint8_t __attribute__((unused)) sender_id,
 }
 
 #ifndef FLOOR_VISUAL_DETECTION_ID
-#error This module requires two color filters, as such you have to define FLOOR_VISUAL_DETECTION_ID to the orange filter
-#error Please define FLOOR_VISUAL_DETECTION_ID to be COLOR_OBJECT_DETECTION1_ID or COLOR_OBJECT_DETECTION2_ID in your airframe
+#define FLOOR_VISUAL_DETECTION_ID ABI_BROADCAST
 #endif
 static abi_event floor_detection_ev;
 static void floor_detection_cb(uint8_t __attribute__((unused)) sender_id,
@@ -142,9 +140,9 @@ void orange_avoider_guided_periodic(void)
   }
 
   //Determine divergence opticflow thresholds
-  float Left_divergence_threshold =0.0015f;
-  float Right_divergence_threshold =0.0015f;
-  float total_divergence_threshold =0.0030f;
+  float Left_divergence_threshold =0.015f;
+  float Right_divergence_threshold =0.015f;
+  float total_divergence_threshold =0.030f;
 
 
   // compute current color thresholds
@@ -153,10 +151,10 @@ void orange_avoider_guided_periodic(void)
   float floor_centroid_frac = floor_centroid / (float)front_camera.output_size.h / 2.f;
 
   VERBOSE_PRINT("Color_count: %d  threshold: %d state: %d \n", color_count, color_count_threshold, navigation_state);
-  VERBOSE_PRINT("Floor count: %d, threshold: %d\n", floor_count, floor_count_threshold);
-  VERBOSE_PRINT("Floor centroid: %f\n", floor_centroid_frac);
+  // VERBOSE_PRINT("Floor count: %d, threshold: %d\n", floor_count, floor_count_threshold);
+  // VERBOSE_PRINT("Floor centroid: %f\n", floor_centroid_frac);
 
-  VERBOSE_PRINT("TOTAL_DIV %f\n", total_divergence);
+  VERBOSE_PRINT("TOTAL_DIV %f, state: %d\n", total_divergence, navigation_state);
   VERBOSE_PRINT("obstacle confidence %d\n", obstacle_free_confidence);
 
   // update our safe confidence using color threshold
@@ -165,6 +163,7 @@ void orange_avoider_guided_periodic(void)
   } else {
     obstacle_free_confidence -= 2;  // be more cautious with positive obstacle detections
   }
+  
 
   // if(left_divergence < Left_divergence_threshold){
   //   obstacle_free_confidence++;
@@ -192,22 +191,20 @@ void orange_avoider_guided_periodic(void)
 
   switch (navigation_state){
     case SAFE:
-      if (floor_count < floor_count_threshold || fabsf(floor_centroid_frac) > 0.12){
+       if (floor_count < floor_count_threshold || fabsf(floor_centroid_frac) > 0.12){
         navigation_state = OUT_OF_BOUNDS;
       } else if (obstacle_free_confidence == 0){
         navigation_state = OBSTACLE_FOUND;
-      }  else {
-        // Check for divergence thresholds
-        if (left_divergence >= Left_divergence_threshold) {
+      } else if (left_divergence >= Left_divergence_threshold) {
           navigation_state = LEFT_DIVERGENCE_EXCEEDED;
-        } else if (right_divergence >= Right_divergence_threshold) {
+      } else if (right_divergence >= Right_divergence_threshold) {
           navigation_state = RIGHT_DIVERGENCE_EXCEEDED;
-        } else if (total_divergence >= total_divergence_threshold) {
+      } else if (total_divergence >= total_divergence_threshold) {
           navigation_state = TOTAL_DIVERGENCE_EXCEEDED;
-        } else {
+      } else {
           guidance_h_set_body_vel(speed_sp, 0);
         }
-      }
+  
       break;
     case OBSTACLE_FOUND:
       // stop
@@ -221,9 +218,10 @@ void orange_avoider_guided_periodic(void)
       break;
     case SEARCH_FOR_SAFE_HEADING:
       guidance_h_set_heading_rate(avoidance_heading_direction * oag_heading_rate);
+      VERBOSE_PRINT("SEARCH_FOR_SAFE_HEADING - Obstacle free confidence: %d\n", obstacle_free_confidence);
 
       // make sure we have a couple of good readings before declaring the way safe
-      if (obstacle_free_confidence >= 8){
+      if(obstacle_free_confidence >= 2){
         guidance_h_set_heading(stateGetNedToBodyEulers_f()->psi);
         navigation_state = SAFE;
       }
@@ -267,7 +265,7 @@ void orange_avoider_guided_periodic(void)
       // Setup if right divergence is above threshold turn ... degrees left
       if (right_divergence >= Right_divergence_threshold) {
         guidance_h_set_heading_rate(-oag_heading_rate); // Turn Left
-        VERBOSE_PRINT("mayday!")
+        VERBOSE_PRINT("mayday!");
         navigation_state= SEARCH_FOR_SAFE_HEADING;
       }
       break; 
@@ -275,7 +273,7 @@ void orange_avoider_guided_periodic(void)
       // If total divergence is above threshold turn 180 degrees
       if (total_divergence >= total_divergence_threshold) {
         guidance_h_set_heading_rate(avoidance_heading_direction * RadOfDeg(180)); // Turn 180 degrees
-        VERBOSE_PRINT("mayday!")
+        VERBOSE_PRINT("mayday!");
         navigation_state= SEARCH_FOR_SAFE_HEADING;
       }
       break;
