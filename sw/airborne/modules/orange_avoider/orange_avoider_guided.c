@@ -254,31 +254,44 @@ void orange_avoider_guided_periodic(void)
 
     case LEFT_DIVERGENCE_EXCEEDED:
       // Setup if left divergence is above threshold turn ... degrees right
-      if (left_divergence >= Left_divergence_threshold) {
-        guidance_h_set_heading_rate(avoidance_heading_direction * 10*oag_heading_rate); // Turn right
+      //if (left_divergence >= Left_divergence_threshold) {
+        // guidance_h_set_heading_rate(RadOfDeg(25)); // Turn right
+        // navigation_state= SEARCH_FOR_SAFE_HEADING;
+
+        guidance_h_set_heading_rate(RadOfDeg(90.f));
+    
+      // make sure we have a couple of good readings before declaring the way safe
+      if(obstacle_free_confidence >= 2){
+        guidance_h_set_heading(stateGetNedToBodyEulers_f()->psi);
         PRINT("LD->Rightturn!\n");
-        navigation_state= SEARCH_FOR_SAFE_HEADING;
+        navigation_state = SAFE;
       }
+      
       break; 
     case RIGHT_DIVERGENCE_EXCEEDED:
       // Setup if right divergence is above threshold turn ... degrees left
-      if (right_divergence >= Right_divergence_threshold) {
-        guidance_h_set_heading_rate(avoidance_heading_direction * 10*-oag_heading_rate); // Turn Left
+      //if (right_divergence >= Right_divergence_threshold) {
+        guidance_h_set_heading_rate(RadOfDeg(90.f));
+    
+      // make sure we have a couple of good readings before declaring the way safe
+      if(obstacle_free_confidence >= 2){
+        guidance_h_set_heading(stateGetNedToBodyEulers_f()->psi);
         VERBOSE_PRINT("RD->leftturn!\n");
-        navigation_state= SEARCH_FOR_SAFE_HEADING;
-      }
+        navigation_state= SAFE; 
+      
       break; 
     case TOTAL_DIVERGENCE_EXCEEDED:
       // If total divergence is above threshold turn 180 degrees
-      if (total_divergence >= total_divergence_threshold) {
+      //if (total_divergence >= total_divergence_threshold) {
          // stop
       guidance_h_set_body_vel(0, 0);
 
       // randomly select new search direction
-      chooseRandomIncrementAvoidance();
+      guidance_h_set_heading_rate(RadOfDeg(180.f));
+      VERBOSE_PRINT("TD->180 turn!\n");
 
-      navigation_state = SEARCH_FOR_SAFE_HEADING;
-      }
+      navigation_state = SAFE;
+      
       break;
     default:
       break;
