@@ -25,6 +25,8 @@
  * define which filter to use.
  */
 
+#include <stdint.h>
+
 #ifndef ORANGE_AVOIDER_GUIDED_H
 #define ORANGE_AVOIDER_GUIDED_H
 
@@ -33,6 +35,7 @@ extern float oag_color_count_frac;  // obstacle detection threshold as a fractio
 extern float oag_floor_count_frac;  // floor detection threshold as a fraction of total of image
 extern float oag_max_speed;         // max flight speed [m/s]
 extern float oag_heading_rate;      // heading rate setpoint [rad/s]
+extern int16_t heading_new;         // heading region for testing navigation based on green area
 
 extern void orange_avoider_guided_init(void);
 extern void orange_avoider_guided_periodic(void);

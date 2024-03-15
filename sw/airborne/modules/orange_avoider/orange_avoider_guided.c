@@ -55,7 +55,7 @@ enum navigation_state_t {
 // define settings
 float oag_color_count_frac = 0.18f;       // obstacle detection threshold as a fraction of total of image
 float oag_floor_count_frac = 0.05f;       // floor detection threshold as a fraction of total of image
-float oag_max_speed = 0.5f;               // max flight speed [m/s]
+float oag_max_speed = 0.2f;               // max flight speed [m/s]
 float oag_heading_rate = RadOfDeg(20.f);  // heading change setpoint for avoidance [rad/s]
 
 // define and initialise global variables
@@ -65,7 +65,8 @@ int32_t floor_count = 0;                // green color count from color filter f
 int32_t floor_centroid = 0;             // floor detector centroid in y direction (along the horizon)
 float avoidance_heading_direction = 0;  // heading change direction for avoidance [rad/s]
 int16_t obstacle_free_confidence = 0;   // a measure of how certain we are that the way ahead if safe.
-int16_t heading_new = 0;
+int16_t heading_new = 0;                  // which area most green
+float new_heading_direction = 0;            // heading direction based on amount of green
 const int16_t max_trajectory_confidence = 5;  // number of consecutive negative object detections to be sure we are obstacle free
 
 // This call back will be used to receive the color count from the orange detector
@@ -94,15 +95,15 @@ static void floor_detection_cb(uint8_t __attribute__((unused)) sender_id,
   floor_centroid = pixel_y;
 }
 
-#ifndef GROUND_SPLIT_ID
-#define GROUND_SPLIT_ID ABI_BROADCAST
-#endif
-static abi_event ground_detection_ev;
-static void ground_detection_cb(uint8_t __attribute__((unused)) sender_id,
-                                int16_t new_direction)
-{
-  heading_new = new_direction;
-}
+// #ifndef GROUND_SPLIT_ID
+// #define GROUND_SPLIT_ID ABI_BROADCAST
+// #endif
+// static abi_event ground_detection_ev;
+// static void ground_detection_cb(uint8_t __attribute__((unused)) sender_id,
+//                                 int16_t new_direction)
+// {
+//   heading_new = new_direction;
+// }
 /*
  * Initialisation function
  */
@@ -115,7 +116,7 @@ void orange_avoider_guided_init(void)
   // bind our colorfilter callbacks to receive the color filter outputs
   AbiBindMsgVISUAL_DETECTION(ORANGE_AVOIDER_VISUAL_DETECTION_ID, &color_detection_ev, color_detection_cb);
   AbiBindMsgVISUAL_DETECTION(FLOOR_VISUAL_DETECTION_ID, &floor_detection_ev, floor_detection_cb);
-  AbiBindMsgGROUND_DETECTION(GROUND_SPLIT_ID, &ground_detection_ev, ground_detection_cb);
+  // AbiBindMsgGROUND_DETECTION(GROUND_SPLIT_ID, &ground_detection_ev, ground_detection_cb);
 }
 
 /*
@@ -160,7 +161,32 @@ void orange_avoider_guided_periodic(void)
       } else if (obstacle_free_confidence == 0){
         navigation_state = OBSTACLE_FOUND;
       } else {
+        if(heading_new == 0){
+          new_heading_direction = -72.f;
+        }
+        else if (heading_new == 1){
+          new_heading_direction = -36.f;
+        }
+        else if (heading_new == 2){
+          new_heading_direction = 0.f;
+          }
+        else if (heading_new == 3){
+          new_heading_direction = 36.f;
+          }
+        else if (heading_new == 4){
+          new_heading_direction = 72.f;
+          }
+        else if (heading_new == -1){
+          navigation_state = OUT_OF_BOUNDS;
+          break;
+          }
+        
+        guidance_h_set_heading_rate(RadOfDeg(new_heading_direction));
         guidance_h_set_body_vel(speed_sp, 0);
+        if (heading_new == 2){
+        guidance_h_set_heading(stateGetNedToBodyEulers_f()->psi);
+        navigation_state = SAFE;
+      }
       }
 
       break;
