@@ -35,6 +35,7 @@
 extern struct opticflow_t opticflow[];
 
 // Module functions
+float calculate_rms(float *values, int size);
 extern void opticflow_module_init(void);
 extern void opticflow_module_run(void);
 extern void opticflow_module_start(void);

@@ -77,6 +77,7 @@ void get_size_divergence(struct flow_t *vectors, int count, int n_samples, Diver
     // go through all possible lines:
     for (i = 0; i < count; i++) {
       for (j = i + 1; j < count; j++) {
+
         // distance in previous image:
         dx = (float)vectors[i].pos.x - (float)vectors[j].pos.x;
         dy = (float)vectors[i].pos.y - (float)vectors[j].pos.y;
@@ -91,7 +92,7 @@ void get_size_divergence(struct flow_t *vectors, int count, int n_samples, Diver
         dy = (float)vectors[i].pos.y + (float)vectors[i].flow_y - (float)vectors[j].pos.y - (float)vectors[j].flow_y;
         distance_2 = sqrtf(dx * dx + dy * dy);
 
-        if ((float)vectors[i].pos.y <= center_y && (float)vectors[j].pos.y <= center_y) {
+        if ((float)vectors[i].pos.y >= center_y && (float)vectors[j].pos.y >= center_y) {
           // PRINT("LEFT SIDE");
           divs_sum_left += (distance_2 - distance_1) / distance_1;
           used_samples_left++;
@@ -133,7 +134,7 @@ void get_size_divergence(struct flow_t *vectors, int count, int n_samples, Diver
 
       // PRINT("VECTOR POS X: %u", vectors[i].pos.x);
 
-    if ((float)vectors[i].pos.y <= center_y && (float)vectors[j].pos.y <= center_y) {
+    if ((float)vectors[i].pos.y >= center_y && (float)vectors[j].pos.y >= center_y) {
           divs_sum_left += (distance_2 - distance_1) / distance_1;
           used_samples_left++;
         } 
@@ -142,10 +143,9 @@ void get_size_divergence(struct flow_t *vectors, int count, int n_samples, Diver
           divs_sum_right += (distance_2 - distance_1) / distance_1;
           used_samples_right++;
         }
-
-      divs_sum += (distance_2 - distance_1) / distance_1;
-      used_samples++;
-    }
+        divs_sum += (distance_2 - distance_1) / distance_1;
+        used_samples++;
+  }
   }
   
   // float total_divergence = used_samples > 0 ? divs_sum / used_samples : 0.f;

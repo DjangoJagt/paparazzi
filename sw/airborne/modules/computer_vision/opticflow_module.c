@@ -65,14 +65,39 @@ PRINT_CONFIG_VAR(OPTICFLOW_FPS_CAMERA2)
 #define ACTIVE_CAMERAS 1
 #endif
 
+#define RMS_LENGTH 50
+
 #define PRINT(string, ...) fprintf(stderr, "[mav_exercise->%s()] " string,__FUNCTION__ , ##__VA_ARGS__)
 
 float left_div_size;
 float right_div_size;
 float total_div_size;
+float rms_left;
+float rms_right;
+float rms_total;
 int counter = 0;
 
 DivergenceResult divergence_left_right_result;
+
+
+// Calculate RMS for a given list
+float calculate_rms(float *values, int size) {
+    float sum_squared = 0.0f;
+
+    // Sum the squares of the values
+    for (int i = 0; i < size; i++) {
+        sum_squared += values[i] * values[i];
+    }
+
+    // Calculate the mean of the squares
+    float mean_squared = sum_squared / size;
+
+    // Calculate the square root of the mean squared value
+    float rms = sqrtf(mean_squared);
+
+    return rms;
+}
+
 
 /* The main opticflow variables */
 struct opticflow_t opticflow[ACTIVE_CAMERAS];                         ///< Opticflow calculations
@@ -121,6 +146,13 @@ void opticflow_module_init(void)
 
   opticflow_got_result[0] = false;
 
+  for (int i = 0; i < RMS_LENGTH; i++) {
+  divergence_left_right_result.store_left_divergence[i] = 0.0f;
+  divergence_left_right_result.store_right_divergence[i] = 0.0f;
+  divergence_left_right_result.store_total_divergence[i] = 0.0f;
+}
+
+
   opticflow_calc_init(opticflow);
 
   cv_add_to_device(&OPTICFLOW_CAMERA, opticflow_module_calc, OPTICFLOW_FPS, 0);
@@ -156,9 +188,9 @@ void opticflow_module_run(void)
                             //  opticflow_result[idx_camera].flow_der_x,
                             //  opticflow_result[idx_camera].flow_der_y,
                             //  opticflow_result[idx_camera].noise_measurement,
-                             left_div_size,
-                             right_div_size,
-                             total_div_size);
+                             rms_left,
+                             rms_right,
+                             rms_total);
   // // Update the stabilization loops on the current calculation
   // for (int idx_camera = 0; idx_camera < ACTIVE_CAMERAS; idx_camera++) {
     
@@ -178,8 +210,6 @@ void opticflow_module_run(void)
   pthread_mutex_unlock(&opticflow_mutex);
 }
 
-int count = 0;
-
 /**
  * The main optical flow calculation thread
  * This thread passes the images trough the optical flow
@@ -193,15 +223,28 @@ struct image_t *opticflow_module_calc(struct image_t *img, uint8_t camera_id) {
     struct pose_t pose = get_rotation_at_timestamp(img->pprz_ts);
     img->eulers = pose.eulers;
 
+    if (counter >= RMS_LENGTH) {
+      counter = 0;
+    } 
+
     static struct opticflow_result_t temp_result[ACTIVE_CAMERAS]; 
     pthread_mutex_lock(&opticflow_mutex);
     if (opticflow_calc_frame(&opticflow[camera_id], img, &temp_result[camera_id], &divergence_left_right_result)) {
         left_div_size = divergence_left_right_result.left_divergence;
         right_div_size = divergence_left_right_result.right_divergence;
         total_div_size = divergence_left_right_result.total_divergence;
+        divergence_left_right_result.store_left_divergence[counter] = left_div_size;
+        divergence_left_right_result.store_right_divergence[counter] = right_div_size;
+        divergence_left_right_result.store_total_divergence[counter] = total_div_size;
         opticflow_got_result[0] = true;
     }
     pthread_mutex_unlock(&opticflow_mutex);
+
+    rms_left = calculate_rms(divergence_left_right_result.store_left_divergence, RMS_LENGTH);
+    rms_right = calculate_rms(divergence_left_right_result.store_right_divergence, RMS_LENGTH);
+    rms_total = calculate_rms(divergence_left_right_result.store_total_divergence, RMS_LENGTH);
+
+    counter++;
 
     return img;
 }

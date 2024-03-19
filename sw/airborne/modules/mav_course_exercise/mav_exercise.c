@@ -98,7 +98,7 @@ void mav_exercise_periodic(void) {
 
   PRINT("Color_count: %d  threshold: %d state: %d \n", color_count, color_count_threshold, navigation_state);
 
-  PRINT("LEFT DIVERGENCE: %f  RIGHT_DIVERGENCE: %f TOTAL_DIVERGENCE: %f \n", left_divergence, right_divergence, total_divergence);
+  // PRINT("LEFT DIVERGENCE: %f  RIGHT_DIVERGENCE: %f TOTAL_DIVERGENCE: %f \n", left_divergence, right_divergence, total_divergence);
 
   // update our safe confidence using color threshold
   if (color_count < color_count_threshold) {
@@ -115,9 +115,13 @@ void mav_exercise_periodic(void) {
       moveWaypointForward(WP_TRAJECTORY, 1.5f * moveDistance);
       if (!InsideObstacleZone(WaypointX(WP_TRAJECTORY), WaypointY(WP_TRAJECTORY))) {
         navigation_state = OUT_OF_BOUNDS;
-      } else if (obstacle_free_confidence == 0) {
+      } if (total_divergence >= 0.08) {
         navigation_state = OBSTACLE_FOUND;
-      } else {
+        PRINT("TOTAL DIV TOO HIGH OBSTACLE FOUND");
+      }  else if (obstacle_free_confidence == 0) {
+        navigation_state = OBSTACLE_FOUND;
+      }
+      else {
         moveWaypointForward(WP_GOAL, moveDistance);
       }
       break;
@@ -132,11 +136,17 @@ void mav_exercise_periodic(void) {
       navigation_state = SEARCH_FOR_SAFE_HEADING;
       break;
     case SEARCH_FOR_SAFE_HEADING:
-      increase_nav_heading(5.f);
 
+      if (left_divergence <= right_divergence) {
+        increase_nav_heading(-5.f);
+        PRINT("TURNING LEFT");
+      } else {
+        increase_nav_heading(5.f);
+        PRINT("TURNING RIGHT");
+      }
+      
       // make sure we have a couple of good readings before declaring the way safe
       if (obstacle_free_confidence >= 2){
-        increase_nav_heading(20.f);
         navigation_state = SAFE;
       }
       break;
