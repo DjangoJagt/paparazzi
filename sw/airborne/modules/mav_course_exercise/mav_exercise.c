@@ -39,6 +39,9 @@ enum navigation_state_t {
   OBSTACLE_FOUND,
   SEARCH_FOR_SAFE_HEADING,
   OUT_OF_BOUNDS,
+  LEFT_DIVERGENCE_EXCEEDED,
+  RIGHT_DIVERGENCE_EXCEEDED,
+  TOTAL_DIVERGENCE_EXCEEDED,
   HOLD
 };
 
@@ -54,6 +57,11 @@ const int16_t max_trajectory_confidence = 5; // number of consecutive negative o
 float left_divergence = 0.0f;
 float right_divergence = 0.0f;
 float total_divergence = 0.0f;
+
+//Determine divergence opticflow thresholds
+float Left_divergence_threshold =0.15f;
+float Right_divergence_threshold =0.15f;
+float total_divergence_threshold =0.30f;
 
 // needed to receive output from a separate module running on a parallel process
 #ifndef ORANGE_AVOIDER_VISUAL_DETECTION_ID
@@ -117,6 +125,12 @@ void mav_exercise_periodic(void) {
         navigation_state = OUT_OF_BOUNDS;
       } else if (obstacle_free_confidence == 0) {
         navigation_state = OBSTACLE_FOUND;
+      } else if (left_divergence>= Left_divergence_threshold){
+        navigation_state = LEFT_DIVERGENCE_EXCEEDED;
+      } else if (right_divergence>= Left_divergence_threshold){
+        navigation_state = RIGHT_DIVERGENCE_EXCEEDED;
+      } else if (total_divergence>= total_divergence_threshold){
+        navigation_state = TOTAL_DIVERGENCE_EXCEEDED;
       } else {
         moveWaypointForward(WP_GOAL, moveDistance);
       }
@@ -155,6 +169,39 @@ void mav_exercise_periodic(void) {
         navigation_state = SAFE;
       }
       break;
+    case LEFT_DIVERGENCE_EXCEEDED:
+      waypoint_move_here_2d(WP_GOAL);
+      waypoint_move_here_2d(WP_TRAJECTORY);
+
+      moveWaypointForward(WP_GOAL,0);
+      increase_nav_heading(20.f);
+      PRINT("LD--> RIGHT turn!\n");
+
+    navigation_state = SAFE;
+    break;
+
+    case RIGHT_DIVERGENCE_EXCEEDED:
+      waypoint_move_here_2d(WP_GOAL);
+      waypoint_move_here_2d(WP_TRAJECTORY);
+
+      moveWaypointForward(WP_GOAL,0);
+      increase_nav_heading(20.f);
+      PRINT("RD--> Left turn!\n");
+
+    navigation_state = SAFE;
+    break;
+    
+    case TOTAL_DIVERGENCE_EXCEEDED:
+      waypoint_move_here_2d(WP_GOAL);
+      waypoint_move_here_2d(WP_TRAJECTORY);
+
+      moveWaypointForward(WP_GOAL,0);
+      increase_nav_heading(80.f);
+      PRINT("TD--> 80 turn!\n");
+
+    navigation_state = SAFE;
+    break;
+    
     case HOLD:
     default:
       break;
