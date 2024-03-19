@@ -132,7 +132,7 @@ void mav_exercise_periodic(void) {
       navigation_state = SEARCH_FOR_SAFE_HEADING;
       break;
     case SEARCH_FOR_SAFE_HEADING:
-      increase_nav_heading(20.f);
+      increase_nav_heading(5.f);
 
       // make sure we have a couple of good readings before declaring the way safe
       if (obstacle_free_confidence >= 2){
