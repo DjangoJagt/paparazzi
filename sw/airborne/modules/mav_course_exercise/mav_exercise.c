@@ -59,8 +59,8 @@ float right_divergence = 0.0f;
 float total_divergence = 0.0f;
 
 //Determine divergence opticflow thresholds
-float Left_divergence_threshold =0.075f;
-float Right_divergence_threshold =0.075f;
+float Left_divergence_threshold =0.065f;
+float Right_divergence_threshold =0.065f;
 float total_divergence_threshold =0.190f;
 
 // needed to receive output from a separate module running on a parallel process
@@ -121,11 +121,11 @@ void mav_exercise_periodic(void) {
   switch (navigation_state) {
     case SAFE:
       moveWaypointForward(WP_TRAJECTORY, 1.5f * moveDistance);
-      if (!InsideObstacleZone(WaypointX(WP_TRAJECTORY), WaypointY(WP_TRAJECTORY))) {
-      navigation_state = OUT_OF_BOUNDS;
+     //if (!InsideObstacleZone(WaypointX(WP_TRAJECTORY), WaypointY(WP_TRAJECTORY))) {
+     // navigation_state = OUT_OF_BOUNDS;
       //} else if (obstacle_free_confidence == 0) {
       //  navigation_state = OBSTACLE_FOUND;
-         }else if (left_divergence>= Left_divergence_threshold){
+      if (left_divergence>= Left_divergence_threshold){
         navigation_state = LEFT_DIVERGENCE_EXCEEDED;
       } else if (right_divergence>= Right_divergence_threshold){
         navigation_state = RIGHT_DIVERGENCE_EXCEEDED;
@@ -176,6 +176,8 @@ void mav_exercise_periodic(void) {
       moveWaypointForward(WP_GOAL,0);
       increase_nav_heading(-30.f);
       PRINT("LD--> LEFT turn!\n");
+      waypoint_move_here_2d(WP_GOAL);
+      waypoint_move_here_2d(WP_TRAJECTORY);
 
     navigation_state = SAFE;
     break;
@@ -187,6 +189,8 @@ void mav_exercise_periodic(void) {
       moveWaypointForward(WP_GOAL,0);
       increase_nav_heading(30.f);
       PRINT("RD--> Right turn!\n");
+      waypoint_move_here_2d(WP_GOAL);
+      waypoint_move_here_2d(WP_TRAJECTORY);
 
     navigation_state = SAFE;
     break;
@@ -198,10 +202,14 @@ void mav_exercise_periodic(void) {
       moveWaypointForward(WP_GOAL,0);
       increase_nav_heading(80.f);
       PRINT("TD--> 80 turn!\n");
+      waypoint_move_here_2d(WP_GOAL);
+      waypoint_move_here_2d(WP_TRAJECTORY);
 
     navigation_state = SAFE;
     break;
     
+    //case ZERO_HEADING:
+   // head
     case HOLD:
     default:
       break;
