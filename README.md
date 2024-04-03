@@ -21,7 +21,7 @@ This project is initially configured for Bebop drones but is adaptable for other
 The competition-specific files reside in the `GROUP_11` directory and main ones are as follows:
 - `conf/modules/GROUP11.xml`
 - `conf/airframes/tudelft/bebop_GROUP_11.xml`
-- `sw/airborne/modules/GROUP_11` includes the c and header file
+- `sw/airborne/modules/GROUP_11` includes the main c and header file
 - `conf/flight_plans/tudelft/course_GROUP_11.xml`
 
 The `sw/airborne/modules/computer_vision/cv_detect_color_object` and `sw/airborne/modules/ground_detection` modules were pivotal to our autonomous flight challenge configuration, providing essential functionalities.
