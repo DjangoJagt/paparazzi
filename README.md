@@ -24,7 +24,7 @@ The competition-specific files reside in the `GROUP_11` directory and main ones 
 - `sw/airborne/modules/GROUP_11` includes the c and header file
 - `conf/flight_plans/tudelft/course_GROUP_11.xml`
 
-The `cv_detect_color_object` and `ground_detection` modules were pivotal to our autonomous flight challenge configuration, providing essential functionalities.
+The `sw/airborne/modules/computer_vision/cv_detect_color_object` and `sw/airborne/modules/ground_detection` modules were pivotal to our autonomous flight challenge configuration, providing essential functionalities.
 
 ## Testing and Development
 The project's development involved various files and configurations not strictly part of the mentioned modules. These were essential during the testing phase to refine our algorithms and system capabilities. Key insights from our development process might offer valuable perspectives for those looking to replicate or further innovate on this work.
@@ -33,4 +33,4 @@ The project's development involved various files and configurations not strictly
 In the early stages of testing, we utilized the `orange_avoider_guided` module as a baseline for our navigation and obstacle avoidance algorithms. This preliminary phase allowed us to identify crucial adjustments and enhancements necessary for our custom module development, setting a foundation for more sophisticated functionalities.
 
 ### Optic Flow Testing
-Within the `OPTICFLOW_TESTING` folder, we have included test files intended for exploring the potential of optic flow in enhancing UAV navigation. The files contain modified versions of the existing optical flow calculators from the `computer_vision` module. The code was modified to make it fit for our purpose of navigation. Despite the promising aspects of optic flow for real-time environmental interaction and obstacle detection, it was ultimately not incorporated into our competition setup. These tests, however, represent an area of potential future exploration for the project.
+Within the `OPTICFLOW_TESTING` folder, we have included test files intended for exploring the potential of optic flow in enhancing UAV navigation. The files contain modified versions of the existing optical flow calculators from the `sw/airborne/modules/computer_vision/` folder. The code was modified to make it fit for our purpose of navigation. Despite the promising aspects of optic flow for real-time environmental interaction and obstacle detection, it was ultimately not incorporated into our competition setup. These tests, however, represent an area of potential future exploration for the project.
